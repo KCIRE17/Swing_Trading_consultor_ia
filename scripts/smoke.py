@@ -82,8 +82,26 @@ def main():
         client = TestClient(app)
         response = client.get("/api/health")
         check("http: /api/health", response.status_code == 200, response.text)
+
+        start = time.time()
+        payload = client.get("/api/indicators?ticker=SPY&period=3mo")
+        ok = payload.status_code == 200 and payload.json().get("series") and len(payload.json()["series"]["dates"]) > 0
+        check("http: /api/indicators (serializable sin NaN)", ok, payload.text[:300], start=start)
+
+        resp_forecast = client.get("/api/forecast?ticker=SPY&period=3mo")
+        check("http: /api/forecast", resp_forecast.status_code == 200, resp_forecast.text[:200])
+
+        resp_signal = client.get("/api/signal?ticker=SPY&period=3mo")
+        ok_signal = resp_signal.status_code == 200 and resp_signal.json().get("senal", {}).get("direccion") in ("BUY", "HOLD", "SELL")
+        check("http: /api/signal (degradado sin gemini)", ok_signal, resp_signal.text[:200])
+
+        resp_bt = client.get("/api/backtest?ticker=SPY")
+        check("http: /api/backtest", resp_bt.status_code == 200, resp_bt.text[:200])
+
+        resp_fav = client.get("/favicon.ico")
+        check("http: /favicon.ico", resp_fav.status_code == 200, resp_fav.text[:80])
     except Exception as exc:
-        check("http: /api/health", False, repr(exc))
+        check("http: endpoints", False, repr(exc))
 
     print("== FIN ==")
 

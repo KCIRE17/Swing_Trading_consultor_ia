@@ -116,11 +116,16 @@ function updateChart(key, labels, datasetsData) {
 
 async function apiGet(path) {
   const response = await fetch(path, { headers: { Accept: "application/json" } });
-  const payload = await response.json();
+  const text = await response.text();
   if (!response.ok) {
-    throw new Error(payload.detail?.mensaje || payload.detail || `HTTP ${response.status}`);
+    let detail = text.slice(0, 200);
+    try {
+      const body = JSON.parse(text);
+      detail = body.detail?.mensaje || body.detail || text.slice(0, 200);
+    } catch (_) {}
+    throw new Error(`HTTP ${response.status}: ${detail}`);
   }
-  return payload;
+  return JSON.parse(text);
 }
 
 function fmt(value, digits = 2) {

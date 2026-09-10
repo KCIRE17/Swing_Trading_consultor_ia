@@ -1,3 +1,4 @@
+import math
 import time
 
 import pandas as pd
@@ -63,7 +64,7 @@ def series_payload(frame, limit=180):
         "open": _round_list(work["Open"]),
         "high": _round_list(work["High"]),
         "low": _round_list(work["Low"]),
-        "volume": [int(v) for v in work["Volume"]],
+        "volume": [_int_volume(v) for v in work["Volume"]],
         "sma20": _round_list(work["SMA20"]),
         "sma50": _round_list(work["SMA50"]),
         "rsi14": _round_list(work["RSI14"]),
@@ -75,4 +76,28 @@ def series_payload(frame, limit=180):
 
 
 def _round_list(series):
-    return [None if value is None or (hasattr(value, "isna") and value.isna()) else round(float(value), 6) for value in series]
+    result = []
+    for value in series:
+        if value is None:
+            result.append(None)
+            continue
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            result.append(None)
+            continue
+        if math.isnan(number) or math.isinf(number):
+            result.append(None)
+        else:
+            result.append(round(number, 6))
+    return result
+
+
+def _int_volume(value):
+    try:
+        number = float(value)
+        if math.isnan(number) or math.isinf(number):
+            return 0
+        return int(number)
+    except (TypeError, ValueError):
+        return 0

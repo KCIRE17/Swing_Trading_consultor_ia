@@ -3,6 +3,7 @@ import os
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel
 
 from app import arima_benchmark, backtest as backtest_engine
@@ -171,6 +172,18 @@ def _message(exc):
 
 def _cron_origin():
     return "vercel-cron" if os.environ.get("VERCEL") else "manual"
+
+
+_FAVICON_SVG = (
+    b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'
+    b'<text y=".9em" font-size="90">&#x1F4C8;</text></svg>'
+)
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+@app.get("/favicon.png", include_in_schema=False)
+def favicon():
+    return Response(content=_FAVICON_SVG, media_type="image/svg+xml")
 
 
 if not os.environ.get("VERCEL"):

@@ -68,7 +68,7 @@ def latest_values(df):
         "date": str(last.name.date() if hasattr(last.name, "date") else last.name),
         "close": close_now,
         "change_pct": change_pct,
-        "volume": int(last["Volume"]) if "Volume" in last else 0,
+        "volume": _atoi(last["Volume"]),
         "high": float(last["High"]),
         "low": float(last["Low"]),
         "open": float(last["Open"]),
@@ -90,3 +90,13 @@ def _clean(value):
         return round(value, 6)
     except (TypeError, ValueError):
         return None
+
+
+def _atoi(value):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return 0
+    if np.isnan(number) or np.isinf(number):
+        return 0
+    return int(number)
