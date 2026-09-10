@@ -7,7 +7,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 
 from app import arima_benchmark, backtest as backtest_engine
-from app import gemini_client, signal_engine
+from app import companies, gemini_client, narrator, signal_engine
 from app.cache import DATA_CACHE
 from app.data import fetch_ohlcv, series_payload
 from app.indicators import latest_values
@@ -47,11 +47,14 @@ def health():
 def indicators(ticker: str = Query(..., min_length=1), period: str = "6mo"):
     try:
         frame = fetch_ohlcv(ticker, period)
+        company = companies.resolve(ticker)
         return {
-            "ticker": ticker.upper(),
+            "ticker": company["ticker"],
+            "nombre": company["name"],
             "period": period,
             "ultimo": latest_values(frame),
             "series": series_payload(frame),
+            "meta": _data_meta(ticker, period, frame),
         }
     except Exception as exc:
         raise HTTPException(status_code=502, detail=_message(exc))
@@ -96,7 +99,41 @@ def signal(
         context = _build_context(ticker, period)
         gemini = gemini_client.analyze(context, image_url)
         decision = signal_engine.decide(context, gemini)
-        return {"ticker": ticker.upper(), "contexto_tecnico": context, "analisis_ia": gemini, "senal": decision}
+        company = companies.resolve(ticker)
+        narracion = narrator.explain(context, decision)
+        enriched = gemini_client.enrich_narrative(narracion["parrafo"], context)
+        if enriched:
+            narracion = {"parrafo": enriched, "bullets": narracion["bullets"], "fuente": "gemini"}
+        return {
+            "ticker": company["ticker"],
+            "nombre": company["name"],
+            "contexto_tecnico": context,
+            "analisis_ia": gemini,
+            "senal": decision,
+            "narracion": narracion,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=_message(exc))
+
+
+@app.get("/api/interpret")
+def interpret(ticker: str = Query(..., min_length=1), period: str = "6mo"):
+    try:
+        context = _build_context(ticker, period)
+        gemini = gemini_client.analyze(context, None)
+        decision = signal_engine.decide(context, gemini)
+        company = companies.resolve(ticker)
+        narracion = narrator.explain(context, decision)
+        enriched = gemini_client.enrich_narrative(narracion["parrafo"], context)
+        if enriched:
+            narracion = {"parrafo": enriched, "bullets": narracion["bullets"], "fuente": "gemini"}
+        return {
+            "ticker": company["ticker"],
+            "nombre": company["name"],
+            "narracion": narracion,
+        }
     except HTTPException:
         raise
     except Exception as exc:
@@ -140,6 +177,21 @@ def refresh(tickers: str = Query(default=",".join(DEFAULT_TICKERS))):
             payload = {"error": _message(exc)}
         results.append({"ticker": ticker, "status": status, "datos": payload})
     return {"evento": _cron_origin(), "resultados": results}
+
+
+def _data_meta(ticker, period, frame):
+    last_date = None
+    try:
+        last_date = str(frame.index[-1].date())
+    except Exception:
+        pass
+    return {
+        "proveedor": "Yahoo Finance (yfinance)",
+        "tipo": "OHLCV historico en vivo",
+        "period_solicitado": period,
+        "n_velas": int(len(frame)),
+        "ultima_fecha": last_date,
+    }
 
 
 def _build_context(ticker, period):

@@ -62,6 +62,42 @@ def analyze(context, image_url=None):
     return payload
 
 
+NARRATIVE_INSTRUCTION = (
+    "Actua como un analista senior que explica en lenguaje humano, claro y para inversionistas no tecnicos, "
+    "el estado tecnico del activo descrito. Escribe de 4 a 7 oraciones en espanol, sin titulos, sin markdown "
+    "y sin tablas. Menciona tendencia, RSI, MACD, volatilidad (ATR) y el pronostico econometrico. "
+    "Termina con una frase de lectura practica para Swing Trading (horizonte de 3 a 10 ruedas bursatiles)."
+)
+NARRATIVE_MODEL_DEFAULT = "gemini-2.5-flash"
+
+
+def enrich_narrative(paragraph_reglas, context=None):
+    if not os.environ.get("GEMINI_API_KEY"):
+        return None
+    try:
+        from google import genai
+        from google.genai import types
+
+        model = os.environ.get("GEMINI_NARRATIVE_MODEL", NARRATIVE_MODEL_DEFAULT)
+        api_key = os.environ["GEMINI_API_KEY"]
+        client = genai.Client(api_key=api_key)
+        content = (
+            "Contexto numerico del activo: "
+            f"{_build_text_part(context) if context else ''} \n\n"
+            "Interpretacion base generada por reglas (puedes basarte en ella pero debe sonar natural):\n"
+            f"{paragraph_reglas}"
+        )
+        response = client.models.generate_content(
+            model=model,
+            contents=content,
+            config=types.GenerateContentConfig(system_instruction=NARRATIVE_INSTRUCTION),
+        )
+        text = response.text.strip()
+        return text if text else None
+    except Exception:
+        return None
+
+
 def _build_text_part(context):
     return (
         "Contexto del analisis tecnico y econometrico del activo:\n"

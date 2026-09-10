@@ -156,6 +156,8 @@ async function run() {
     renderCharts(indicatorsData);
     renderArima(arimaData.forecast, ticker);
     renderIA(signalData);
+    renderNarracion(signalData);
+    renderFuente(indicatorsData.meta, signalData.nombre, ticker);
     renderBacktest(btData.backtest);
     setStatus(`Listo · ${ticker} · ${new Date().toLocaleTimeString()}`);
   } catch (err) {
@@ -169,6 +171,8 @@ function renderKpis(data) {
   const senal = data.senal;
   const ia = data.analisis_ia;
 
+  document.querySelector("header h1").textContent =
+    `${data.nombre || ctx.ticker} (${ctx.ticker}) · DSS Swing Trading`;
   kpiSel.precio.textContent = fmt(ctx.close);
   kpiSel.precio.className = "value " + (ctx.change_pct >= 0 ? "up" : "down");
   kpiSel.fecha.textContent = ctx.date || "";
@@ -235,6 +239,42 @@ function renderIA(data) {
     <h3 style="margin-top: 12px;">Justificación técnica</h3>
     <p class="ai-summary">${ia.justificacion_tecnica}</p>
     ${(data.senal.razones || []).map((r) => `<div class="reason">${r}</div>`).join("")}`;
+}
+
+function renderNarracion(data) {
+  const box = document.getElementById("narracionBox");
+  const narracion = data.narracion;
+  if (!narracion || !narracion.parrafo) {
+    box.innerHTML = '<p style="color: var(--muted);">Interpretación no disponible.</p>';
+    return;
+  }
+  const bullets = (narracion.bullets || []).map((b) => `<li>${b}</li>`).join("");
+  const etiqueta = narracion.fuente === "gemini"
+    ? '<span class="badge-gemini">Enriquecida por Gemini</span>'
+    : '<span class="badge-rules">Generada por reglas</span>';
+  box.innerHTML = `
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
+      <h3 style="margin:0;">${data.nombre || data.ticker}</h3> ${etiqueta}
+    </div>
+    <p class="narracion-text">${narracion.parrafo}</p>
+    ${bullets ? `<ul class="narracion-bullets">${bullets}</ul>` : ""}`;
+}
+
+function renderFuente(meta, nombre, ticker) {
+  const box = document.getElementById("fuenteBox");
+  if (!meta) {
+    box.innerHTML = '<p style="color: var(--muted);">Metadatos de la fuente no disponibles.</p>';
+    return;
+  }
+  const card = (label, value) =>
+    `<div class="kpi"><div class="label">${label}</div><div class="value" style="font-size:18px;">${value}</div></div>`;
+  box.innerHTML =
+    card("Proveedor", meta.proveedor) +
+    card("Tipo", meta.tipo) +
+    card("Periodo", meta.period_solicitado) +
+    card("Velas", meta.n_velas) +
+    card("Última fecha", meta.ultima_fecha || "--") +
+    card("Empresa", `${nombre || ticker}`);
 }
 
 function renderBacktest(bt) {

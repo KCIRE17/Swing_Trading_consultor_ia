@@ -2,7 +2,7 @@ import sys
 import time
 
 from app import arima_benchmark, backtest as backtest_engine
-from app import gemini_client, signal_engine
+from app import companies, gemini_client, narrator, signal_engine
 from app.data import fetch_ohlcv, series_payload
 from app.indicators import latest_values
 
@@ -48,6 +48,12 @@ def run_no_key_degrade():
     decision = signal_engine.decide(context, result)
     check("señal: decide HOLD en degradado", decision["direccion"] == "HOLD", str(decision))
 
+    movil = narrator.explain(context, decision)
+    check("narrador: genera parrafo en espanol", bool(movil["parrafo"] and movil["bullets"]), movil["parrafo"][:160])
+
+    compania = companies.resolve("AAPL")
+    check("empresas: nombre real de AAPL", compania["name"] == "Apple Inc.", str(compania))
+
 
 def run_backtest(ticker="SPY"):
     start = time.time()
@@ -92,11 +98,20 @@ def main():
         check("http: /api/forecast", resp_forecast.status_code == 200, resp_forecast.text[:200])
 
         resp_signal = client.get("/api/signal?ticker=SPY&period=3mo")
-        ok_signal = resp_signal.status_code == 200 and resp_signal.json().get("senal", {}).get("direccion") in ("BUY", "HOLD", "SELL")
-        check("http: /api/signal (degradado sin gemini)", ok_signal, resp_signal.text[:200])
+        ok_signal = (
+            resp_signal.status_code == 200
+            and resp_signal.json().get("senal", {}).get("direccion") in ("BUY", "HOLD", "SELL")
+            and resp_signal.json().get("narracion", {}).get("parrafo")
+            and resp_signal.json().get("nombre")
+        )
+        check("http: /api/signal (degradado + narracion + nombre)", ok_signal, resp_signal.text[:200])
 
         resp_bt = client.get("/api/backtest?ticker=SPY")
         check("http: /api/backtest", resp_bt.status_code == 200, resp_bt.text[:200])
+
+        resp_int = client.get("/api/interpret?ticker=AAPL&period=3mo")
+        ok_int = resp_int.status_code == 200 and resp_int.json().get("narracion", {}).get("parrafo")
+        check("http: /api/interpret", ok_int, resp_int.text[:200])
 
         resp_fav = client.get("/favicon.ico")
         check("http: /favicon.ico", resp_fav.status_code == 200, resp_fav.text[:80])

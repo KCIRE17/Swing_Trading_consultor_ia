@@ -20,10 +20,9 @@
       <label>Ticker
         <input id="ticker" list="tickers" value="SPY" />
         <datalist id="tickers">
-          <option value="SPY"></option>
-          <option value="AAPL"></option>
-          <option value="NVDA"></option>
-          <option value="MSFT"></option>
+          <option value="SPY">S&P 500 ETF</option>
+          <option value="AAPL">Apple Inc.</option>
+          <option value="NVDA">NVIDIA Corp.</option>
         </datalist>
       </label>
 
@@ -106,6 +105,20 @@
         </div>
       </div>
     </div>
+
+    <section class="card">
+      <h2>Explicación en lenguaje humano</h2>
+      <div id="narracionBox">
+        <p style="color: var(--muted);">Cargando interpretación...</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Datos de la fuente</h2>
+      <div class="metrics" id="fuenteBox">
+        <p style="color: var(--muted);">Cargando...</p>
+      </div>
+    </section>
 
     <div class="card">
       <h2>Inferencia multimodal (Google Gemini Flash)</h2>

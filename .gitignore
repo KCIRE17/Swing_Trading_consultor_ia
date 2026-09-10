@@ -11,3 +11,7 @@ wheels/
 
 # Env files (secrets)
 .env
+
+# Deploy logs
+log.json
+*-log-export-*.json
