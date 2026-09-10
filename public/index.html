@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Swing Trading Consulter IA - MVP</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>DSS Swing Trading con Business Analytics e IA Multimodal</h1>
+        <p>Equipo 7 · Prototipo académico (MVP) · Costo S/ 0.00</p>
+      </div>
+      <a href="/docs" style="color: var(--accent); font-size: 13px;">Documentación de la API</a>
+    </header>
+
+    <section class="controls">
+      <label>Ticker
+        <input id="ticker" list="tickers" value="SPY" />
+        <datalist id="tickers">
+          <option value="SPY"></option>
+          <option value="AAPL"></option>
+          <option value="NVDA"></option>
+          <option value="MSFT"></option>
+        </datalist>
+      </label>
+
+      <label>Periodo
+        <select id="period">
+          <option value="3mo">3 meses</option>
+          <option value="6mo" selected>6 meses</option>
+          <option value="1y">1 año</option>
+        </select>
+      </label>
+
+      <label style="flex: 1 1 300px;">URL de imagen de la noticia (opcional)
+        <input id="imageUrl" style="width: 100%;" placeholder="https://ejemplo.com/portada-financiera.jpg" />
+      </label>
+
+      <button id="runBtn">Analizar</button>
+      <span id="status">Listo</span>
+    </section>
+
+    <div id="errorBox" class="error-box hidden"></div>
+
+    <section class="kpis">
+      <div class="kpi">
+        <div class="label">Precio</div>
+        <div class="value" id="kpiPrecio">--</div>
+        <div class="sub" id="kpiFecha"></div>
+      </div>
+      <div class="kpi">
+        <div class="label">Variación</div>
+        <div class="value" id="kpiVariacion">--</div>
+      </div>
+      <div class="kpi">
+        <div class="label">RSI 14</div>
+        <div class="value" id="kpiRsi">--</div>
+        <div class="sub" id="kpiRsiNote"></div>
+      </div>
+      <div class="kpi">
+        <div class="label">ATR 14</div>
+        <div class="value" id="kpiAtr">--</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Señal</div>
+        <div class="value" id="kpiSenal">--</div>
+        <div class="sub" id="kpiProb"></div>
+      </div>
+      <div class="kpi">
+        <div class="label">Stop Loss</div>
+        <div class="value" id="kpiSl">--</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Take Profit</div>
+        <div class="value" id="kpiTp">--</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Riesgo IA</div>
+        <div class="value" id="kpiRiesgo">--</div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Precio y medias moviles (SMA20 / SMA50)</h2>
+        <div class="chart-box"><canvas id="chartPrice"></canvas></div>
+      </div>
+
+      <div class="card">
+        <h2>RSI 14</h2>
+        <div class="chart-box"><canvas id="chartRsi"></canvas></div>
+      </div>
+
+      <div class="card">
+        <h2>MACD (12, 26, 9)</h2>
+        <div class="chart-box"><canvas id="chartMacd"></canvas></div>
+      </div>
+
+      <div class="card">
+        <h2>Pronóstico econométrico ARIMA (benchmark)</h2>
+        <div id="arimaBox">
+          <p style="color: var(--muted);">Cargando pronóstico...</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Inferencia multimodal (Google Gemini Flash)</h2>
+      <div id="iaBox">
+        <p style="color: var(--muted);">Sin análisis; ejecuta "Analizar" para obtener la inferencia.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Backtesting histórico (70/15/15 · fricción 0.1%)</h2>
+      <div class="metrics" id="btMetrics"></div>
+      <div class="chart-box"><canvas id="chartBacktest"></canvas></div>
+      <h3 style="margin-top: 14px;">Últimas operaciones simuladas</h3>
+      <div class="table-wrap" id="btTrades"></div>
+    </div>
+
+    <footer>
+      Prototipo académico para fines de investigación. No constituye asesoría de inversión personalizada,
+      no ejecuta órdenes con dinero real y las señales son simulaciones cuantitativas de apoyo al análisis humano.
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

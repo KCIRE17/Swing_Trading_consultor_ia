@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "swing-trading-consultor-ia"
+version = "0.1.0"
+description = "Sistema de Soporte a la Toma de Decisiones para Swing Trading (MVP)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "yfinance",
+    "pandas",
+    "numpy",
+    "statsmodels",
+    "google-genai",
+    "pillow",
+    "requests",
+]
+
+[tool.setuptools]
+py-modules = ["main"]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
