@@ -11,19 +11,23 @@
     <header>
       <div>
         <h1>DSS Swing Trading con Business Analytics e IA Multimodal</h1>
-        <p>Equipo 7 · Prototipo académico (MVP) · Costo S/ 0.00</p>
+        <p>Equipo 7 · Prototipo académico (MVP) · Costo S/ 0.00 · Metodología TDSP</p>
       </div>
       <a href="/docs" style="color: var(--accent); font-size: 13px;">Documentación de la API</a>
     </header>
 
+    <nav class="tabs" id="tabsNav">
+      <button class="tab active" data-tab="resumen">1 · Resumen de Mercado</button>
+      <button class="tab" data-tab="tecnico">2 · Análisis del precio</button>
+      <button class="tab" data-tab="ia">3 · Análisis por IA</button>
+      <button class="tab" data-tab="backtest">4 · Simulación histórica</button>
+      <button class="tab" data-tab="metodologia">5 · Metodología</button>
+      <button class="tab" data-tab="diccionario">6 · Diccionario</button>
+    </nav>
+
     <section class="controls">
-      <label>Ticker
-        <input id="ticker" list="tickers" value="SPY" />
-        <datalist id="tickers">
-          <option value="SPY">S&P 500 ETF</option>
-          <option value="AAPL">Apple Inc.</option>
-          <option value="NVDA">NVIDIA Corp.</option>
-        </datalist>
+      <label>Empresa
+        <select id="ticker"></select>
       </label>
 
       <label>Periodo
@@ -34,8 +38,12 @@
         </select>
       </label>
 
-      <label style="flex: 1 1 300px;">URL de imagen de la noticia (opcional)
+      <label style="flex: 1 1 220px;">URL de imagen de noticia (opcional)
         <input id="imageUrl" style="width: 100%;" placeholder="https://ejemplo.com/portada-financiera.jpg" />
+      </label>
+
+      <label>O subir imagen
+        <input id="imageFile" type="file" accept="image/*" />
       </label>
 
       <button id="runBtn">Analizar</button>
@@ -44,96 +52,144 @@
 
     <div id="errorBox" class="error-box hidden"></div>
 
-    <section class="kpis">
-      <div class="kpi">
-        <div class="label">Precio</div>
-        <div class="value" id="kpiPrecio">--</div>
-        <div class="sub" id="kpiFecha"></div>
-      </div>
-      <div class="kpi">
-        <div class="label">Variación</div>
-        <div class="value" id="kpiVariacion">--</div>
-      </div>
-      <div class="kpi">
-        <div class="label">RSI 14</div>
-        <div class="value" id="kpiRsi">--</div>
-        <div class="sub" id="kpiRsiNote"></div>
-      </div>
-      <div class="kpi">
-        <div class="label">ATR 14</div>
-        <div class="value" id="kpiAtr">--</div>
-      </div>
-      <div class="kpi">
-        <div class="label">Señal</div>
-        <div class="value" id="kpiSenal">--</div>
-        <div class="sub" id="kpiProb"></div>
-      </div>
-      <div class="kpi">
-        <div class="label">Stop Loss</div>
-        <div class="value" id="kpiSl">--</div>
-      </div>
-      <div class="kpi">
-        <div class="label">Take Profit</div>
-        <div class="value" id="kpiTp">--</div>
-      </div>
-      <div class="kpi">
-        <div class="label">Riesgo IA</div>
-        <div class="value" id="kpiRiesgo">--</div>
+    <!-- ============ PESTAÑA 1 · RESUMEN DE MERCADO ============ -->
+    <section class="tab-panel active" data-panel="resumen">
+      <section class="kpis" id="kpisTop"></section>
+
+      <div class="card">
+        <h2>El precio día a día en velas</h2>
+        <p class="chart-hint">Cada vela resume un día: la línea vertical va del mínimo al máximo y el cuerpo va del precio de apertura al de cierre. Verde = el precio subió; rojo = bajó.</p>
+        <div class="chart-box" style="height: 320px;"><canvas id="chartCandle"></canvas></div>
+        <div class="advice" id="advicePrecioCandle" style="margin-top: 12px;"></div>
       </div>
     </section>
 
-    <div class="grid">
-      <div class="card">
-        <h2>Precio y medias moviles (SMA20 / SMA50)</h2>
-        <div class="chart-box"><canvas id="chartPrice"></canvas></div>
-      </div>
+    <!-- ============ PESTAÑA 2 · ANÁLISIS TÉCNICO ============ -->
+    <section class="tab-panel" data-panel="tecnico">
+      <div class="kpis" id="kpisResumen"></div>
 
-      <div class="card">
-        <h2>RSI 14</h2>
-        <div class="chart-box"><canvas id="chartRsi"></canvas></div>
-      </div>
-
-      <div class="card">
-        <h2>MACD (12, 26, 9)</h2>
-        <div class="chart-box"><canvas id="chartMacd"></canvas></div>
-      </div>
-
-      <div class="card">
-        <h2>Pronóstico econométrico ARIMA (benchmark)</h2>
-        <div id="arimaBox">
-          <p style="color: var(--muted);">Cargando pronóstico...</p>
+      <div class="grid">
+        <div class="card">
+          <h2>Precio y su promedio de los últimos 20 y 50 días</h2>
+          <p class="chart-hint">La línea azul es el precio de cierre. Las líneas amarilla (20 días) y rosa (50 días) son el precio promedio; si el precio está arriba, hay tendencia alcista.</p>
+          <div class="chart-box"><canvas id="chartPrice"></canvas></div>
+          <div class="advice" id="advicePrecio"></div>
+        </div>
+        <div class="card">
+          <h2>Fuerza del movimiento (RSI)</h2>
+          <p class="chart-hint">Indica de 0 a 100 cuánta fuerza tiene el movimiento. Cerca de 100 la subida fue muy intensa (puede haber una corrección); cerca de 0 hubo una caída fuerte (puede rebotar).</p>
+          <div class="chart-box"><canvas id="chartRsi"></canvas></div>
+          <div class="advice" id="adviceRsi"></div>
+        </div>
+        <div class="card">
+          <h2>Impulso y dirección del precio (MACD)</h2>
+          <p class="chart-hint">Compara dos promedios para detectar la fuerza del movimiento: barras verdes = impulso alcista; barras rojas = impulso bajista.</p>
+          <div class="chart-box"><canvas id="chartMacd"></canvas></div>
+          <div class="advice" id="adviceMacd"></div>
+        </div>
+        <div class="card">
+          <h2>Proyección del precio a 5 días (modelo estadístico)</h2>
+          <p class="chart-hint">Un modelo estadístico proyecta el precio probable a 5 días. Es una referencia de comparación, no una promesa de ganancia.</p>
+          <div id="arimaBox">
+            <p style="color: var(--muted);">Cargando pronóstico...</p>
+          </div>
+          <div class="advice" id="adviceArima" style="margin-top: 12px;"></div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <section class="card">
-      <h2>Explicación en lenguaje humano</h2>
-      <div id="narracionBox">
-        <p style="color: var(--muted);">Cargando interpretación...</p>
+    <!-- ============ PESTAÑA 3 · INFERENCIA MULTIMODAL ============ -->
+    <section class="tab-panel" data-panel="ia">
+      <div class="grid ia-grid">
+        <div class="card">
+          <h2>Imagen de la noticia financiera analizada</h2>
+          <div id="imageViewer" class="image-viewer">
+            <p style="color: var(--muted);">Adjunta una imagen (URL o archivo) y ejecuta "Analizar" para ver aquí la noticia procesada.</p>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Análisis de la noticia con IA (Gemini Flash)</h2>
+          <div id="iaBox">
+            <p style="color: var(--muted);">Sin análisis; ejecuta "Analizar" para obtener la inferencia.</p>
+          </div>
+        </div>
+      </div>
+
+      <section class="card">
+        <h2>Explicación en lenguaje humano</h2>
+        <div id="narracionBox">
+          <p style="color: var(--muted);">Cargando interpretación...</p>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Datos de la fuente</h2>
+        <div class="metrics" id="fuenteBox">
+          <p style="color: var(--muted);">Cargando...</p>
+        </div>
+      </section>
+    </section>
+
+    <!-- ============ PESTAÑA 4 · BACKTESTING ============ -->
+    <section class="tab-panel" data-panel="backtest">
+      <div class="card">
+        <h2>Simulación histórica: ¿cómo le fue a la estrategia?</h2>
+        <p class="chart-hint">Reproduce la estrategia con datos pasados, entrenando con el 70% del historial y aplicando un costo de 0.1% por operación. Se compara con 'mantenerse sin operar': gana la que suba más.</p>
+        <div class="metrics" id="btMetrics"></div>
+        <div class="chart-box"><canvas id="chartBacktest"></canvas></div>
+        <div class="advice" id="adviceBacktest" style="margin-top: 14px;"></div>
+      </div>
+
+      <div class="card">
+        <h2>Últimas operaciones simuladas</h2>
+        <div class="table-wrap" id="btTrades"></div>
       </div>
     </section>
 
-    <section class="card">
-      <h2>Datos de la fuente</h2>
-      <div class="metrics" id="fuenteBox">
-        <p style="color: var(--muted);">Cargando...</p>
+    <!-- ============ PESTAÑA 5 · METODOLOGÍA ============ -->
+    <section class="tab-panel" data-panel="metodologia">
+      <div class="card">
+        <h2>Metodología TDSP · Fases del ciclo de vida</h2>
+        <p class="hint">Navega por cada fase para ver qué actividad se realiza y su entregable.</p>
+        <div id="tdspStepper" class="stepper"></div>
+      </div>
+
+      <div class="card">
+        <h2>Pipeline analítico · Paso a paso del sistema</h2>
+        <p class="hint">El flujo que transforma datos crudos en señales de decisión.</p>
+        <div id="pipelineFlow" class="pipeline-flow"></div>
+      </div>
+
+      <div class="card">
+        <h2>Cadena de valor analítica</h2>
+        <div id="chainFlow" class="chain-flow"></div>
+      </div>
+
+      <div class="grid two-col">
+        <div class="card">
+          <h2>Las 3Vs del Big Data</h2>
+          <div id="vsBox" class="vs-box"></div>
+        </div>
+        <div class="card">
+          <h2>Herramientas y presupuesto</h2>
+          <div id="toolsBox" class="tools-list"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Alcance y límites éticos</h2>
+        <p id="ethicBox" class="hint"></p>
       </div>
     </section>
 
-    <div class="card">
-      <h2>Inferencia multimodal (Google Gemini Flash)</h2>
-      <div id="iaBox">
-        <p style="color: var(--muted);">Sin análisis; ejecuta "Analizar" para obtener la inferencia.</p>
+    <!-- ============ PESTAÑA 6 · DICCIONARIO ============ -->
+    <section class="tab-panel" data-panel="diccionario">
+      <div class="card">
+        <h2>Diccionario para comenzar en Swing Trading</h2>
+        <p class="hint">Conceptos explicados en lenguaje simple, agrupados por tema. Tus primeros pasos para leer este dashboard.</p>
+        <div id="glossaryBox" class="glossary"></div>
       </div>
-    </div>
-
-    <div class="card">
-      <h2>Backtesting histórico (70/15/15 · fricción 0.1%)</h2>
-      <div class="metrics" id="btMetrics"></div>
-      <div class="chart-box"><canvas id="chartBacktest"></canvas></div>
-      <h3 style="margin-top: 14px;">Últimas operaciones simuladas</h3>
-      <div class="table-wrap" id="btTrades"></div>
-    </div>
+    </section>
 
     <footer>
       Prototipo académico para fines de investigación. No constituye asesoría de inversión personalizada,

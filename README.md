@@ -18,7 +18,12 @@ para inversiones en la modalidad de **Swing Trading**, descrito en la documentac
 - **Motor de señales**: BUY/HOLD/SELL con Stop-Loss (`cierre - 1.5*ATR`) y Take-Profit (`cierre + 3*ATR`).
 - **Backtesting** simplificado con partición 70/15/15, fricción del 0.1%, Win Rate,
   Maximum Drawdown, Sharpe y comparación contra Buy & Hold.
-- **Dashboard web** (HTML + Vanilla JS + Chart.js) con KPIs, gráficos y panel IA.
+- **Screener de mercado**: 8 empresas analizadas con filtro por señal (Compra/Mantener/Venta),
+  búsqueda por nombre y consejo de inversión por reglas.
+- **Consejos por gráfico**: cada gráfico (precio, RSI, MACD, ARIMA, backtest) muestra una
+  interpretación dinámica en lenguaje natural con recomendación (Apto/Precaución/No invertir).
+- **Dashboard web** (HTML + Vanilla JS + Chart.js) en 5 pestañas: Resumen de Mercado,
+  Análisis Técnico, Inferencia Multimodal, Backtesting y Metodología (paso a paso TDSP).
 
 ## Estructura
 
@@ -29,11 +34,12 @@ app/
   cache.py            # Caché LRU en memoria (1h) anti rate-limit de Yahoo
   data.py             # Descarga OHLCV (yfinance) + series para gráficos
   indicators.py       # SMA, RSI, MACD, ATR
+  advisor.py          # Consejos/recomendaciones por gráfico (reglas locales) + screener
   arima_benchmark.py  # ADF + ARIMA (con fallback de tendencia)
-  gemini_client.py    # Imagen por URL -> base64 -> Gemini (degradación elegante)
+  gemini_client.py    # Imagen por URL o archivo -> Gemini (degradación elegante)
   signal_engine.py    # Reglas BUY/HOLD/SELL + SL/TP
   backtest.py         # Simulación 70/15/15 + fricción
-public/               # Dashboard (se sirve estático en Vercel)
+public/               # Dashboard 5 pestañas (se sirve estático en Vercel)
 scripts/smoke.py      # Smoke test del pipeline (validar local/dipositivo)
 ```
 
@@ -93,7 +99,9 @@ Validación rápida del pipeline (red real):
 | GET    | `/api/forecast?ticker=&period=`  | Pronóstico ARIMA 5 ruedas (ADF, orden, AIC)      |
 | POST   | `/api/analyze`                | Body `{ticker, period?, image_url?}` → resultado IA |
 | GET    | `/api/signal?ticker=&period=&image_url=` | Señal final + SL/TP + explicación         |
-| GET    | `/api/backtest?ticker=`       | Métricas de la simulación histórica                |
+| GET    | `/api/backtest?ticker=`       | Métricas de la simulación histórica + consejo |
+| GET    | `/api/screener?tickers=&period=` | Empresas analizadas con señal BUY/HOLD/SELL     |
+| POST   | `/api/signal`                 | Multipart `{ticker, period, file}` → señal con imagen subida desde el PC |
 | GET    | `/api/refresh?tickers=SPY,AAPL,NVDA,MSFT` | Pre-cálculo/refresco (manual o cron)         |
 
 ## Alcance ético

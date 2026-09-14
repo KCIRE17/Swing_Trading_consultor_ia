@@ -1,7 +1,7 @@
 import sys
 import time
 
-from app import arima_benchmark, backtest as backtest_engine
+from app import advisor, arima_benchmark, backtest as backtest_engine
 from app import companies, gemini_client, narrator, signal_engine
 from app.data import fetch_ohlcv, series_payload
 from app.indicators import latest_values
@@ -70,6 +70,14 @@ def run_backtest(ticker="SPY"):
 
 def main():
     print("== SMOKE TEST: Swing Trading Consulter IA ==")
+
+    start = time.time()
+    atxt = advisor.advise_rsi(78)
+    check("advisor: RSI sobrecompra -> no invertir", atxt["recomendacion"] == "No invertir", str(atxt), start=start)
+    check("advisor: screener SPY senal", companies.resolve("MSFT")["name"] == "Microsoft Corporation")
+    check("companies: nombres completos (AMZN, TSLA, GOOGL, META)",
+          all(k in companies.COMPANIES for k in ["AMZN", "TSLA", "GOOGL", "META"]))
+
     for ticker in ["SPY", "AAPL", "NVDA"]:
         try:
             run_ticker(ticker)
@@ -108,6 +116,20 @@ def main():
 
         resp_bt = client.get("/api/backtest?ticker=SPY")
         check("http: /api/backtest", resp_bt.status_code == 200, resp_bt.text[:200])
+
+        resp_sc = client.get("/api/screener?tickers=SPY,AAPL&period=3mo")
+        ok_sc = resp_sc.status_code == 200 and len(resp_sc.json().get("companies", [])) == 2 and all(
+            c.get("nombre") and c.get("senal") in ("BUY", "HOLD", "SELL") for c in resp_sc.json()["companies"]
+        )
+        check("http: /api/screener (nombres + senal)", ok_sc, resp_sc.text[:300])
+
+        resp_ind = client.get("/api/indicators?ticker=SPY&period=3mo")
+        ok_ind = resp_ind.status_code == 200 and set(resp_ind.json().get("asesoria", {})) >= {"precio", "rsi", "macd"}
+        check("http: /api/indicators + asesoria", ok_ind, resp_ind.text[:300], start=time.time())
+
+        resp_arima = client.get("/api/forecast?ticker=SPY&period=3mo")
+        ok_arima = resp_arima.status_code == 200 and resp_arima.json().get("forecast", {}).get("asesoria", {}).get("recomendacion")
+        check("http: /api/forecast + asesoria", ok_arima, resp_arima.text[:200])
 
         resp_int = client.get("/api/interpret?ticker=AAPL&period=3mo")
         ok_int = resp_int.status_code == 200 and resp_int.json().get("narracion", {}).get("parrafo")

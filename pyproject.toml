@@ -18,6 +18,7 @@ dependencies = [
     "google-genai",
     "pillow",
     "requests",
+    "python-multipart",
 ]
 
 [tool.setuptools]

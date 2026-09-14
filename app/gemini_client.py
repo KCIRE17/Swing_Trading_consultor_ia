@@ -28,20 +28,27 @@ SYSTEM_PROMPT = (
 )
 
 
-def analyze(context, image_url=None):
+def analyze(context, image_url=None, image_bytes=None):
     text_part = _build_text_part(context)
-    if image_url:
+    image_part = None
+    if image_bytes is not None:
         try:
-            image_bytes = _download_and_prepare(image_url)
             image_part = {
                 "mime_type": "image/jpeg",
-                "data": image_bytes,
+                "data": _prepare_bytes(image_bytes),
+            }
+        except Exception as exc:
+            image_part = None
+            text_part += f"\n[Nota: la imagen no pudo procesarse: {exc}]"
+    elif image_url:
+        try:
+            image_part = {
+                "mime_type": "image/jpeg",
+                "data": _download_and_prepare(image_url),
             }
         except Exception as exc:
             image_part = None
             text_part += f"\n[Nota: la imagen no pudo descargarse: {exc}]"
-    else:
-        image_part = None
 
     payload = {}
     if image_part is not None:
@@ -129,7 +136,11 @@ def _download_and_prepare(image_url):
     content_type = response.headers.get("Content-Type", "image/jpeg")
     if not content_type.startswith("image"):
         raise ValueError(f"La URL no devolvio una imagen (Content-Type: {content_type})")
-    original = Image.open(io.BytesIO(response.content))
+    return _prepare_bytes(response.content)
+
+
+def _prepare_bytes(image_bytes):
+    original = Image.open(io.BytesIO(image_bytes))
     original.thumbnail((MAX_IMAGE_SIZE, MAX_IMAGE_SIZE), Image.LANCZOS)
     if original.mode not in ("RGB", "L"):
         original = original.convert("RGB")

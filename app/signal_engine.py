@@ -24,16 +24,16 @@ def decide(context, gemini):
         if close is not None and context.get("sma50") and close > context["sma50"]:
             if context.get("rsi14") is not None and context["rsi14"] <= MAX_RSI_BUY:
                 direction = "BUY"
-                reasons.append("Prediccion ALCISTA con alta probabilidad, precio sobre SMA50 y RSI en zona operativa")
+                reasons.append("Predicción alcista con alta probabilidad, precio por encima de su promedio de 50 días y fuerza del movimiento en zona saludable")
             else:
-                reasons.append("Precio sobre SMA50 pero RSI agotado (>65), se espera mejor punto de entrada")
+                reasons.append("Precio por encima de su promedio de 50 días, pero la fuerza del movimiento está muy alta; se espera un mejor punto de entrada")
         else:
-            reasons.append("Prediccion ALCISTA pero precio bajo la SMA50 (tendencia macro no confirma)")
+            reasons.append("Predicción alcista, pero el precio está bajo su promedio de 50 días (la tendencia de mediano plazo no confirma)")
     elif prediccion == "BAJISTA" and probabilidad is not None and probabilidad >= MIN_ALCISTA_PROBABILITY:
         direction = "SELL"
-        reasons.append("Prediccion BAJISTA con alta probabilidad")
+        reasons.append("Predicción bajista con alta probabilidad")
     else:
-        reasons.append("Prediccion NEUTRAL o probabilidad baja: se mantiene posicion esperando confirmacion")
+        reasons.append("Sin dirección clara o probabilidad baja: se mantiene la posición esperando confirmación")
 
     return {
         "señal": direction,

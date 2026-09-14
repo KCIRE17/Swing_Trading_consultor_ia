@@ -1,0 +1,20 @@
+# Entornos virtuales y artefactos locales
+.venv
+__pycache__
+*.py[co]
+*.egg-info
+*.egg-info/
+build
+dist
+wheels
+
+# Secretos
+.env
+
+# Logs locales / exportaciones
+*.log
+log.json
+*-log-export-*.json
+
+# Control de versiones
+.git

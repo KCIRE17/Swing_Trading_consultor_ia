@@ -1,12 +1,12 @@
 import os
 
 import pandas as pd
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-from app import arima_benchmark, backtest as backtest_engine
+from app import advisor, arima_benchmark, backtest as backtest_engine
 from app import companies, gemini_client, narrator, signal_engine
 from app.cache import DATA_CACHE
 from app.data import fetch_ohlcv, series_payload
@@ -48,13 +48,23 @@ def indicators(ticker: str = Query(..., min_length=1), period: str = "6mo"):
     try:
         frame = fetch_ohlcv(ticker, period)
         company = companies.resolve(ticker)
+        ultimo = latest_values(frame)
         return {
             "ticker": company["ticker"],
             "nombre": company["name"],
             "period": period,
-            "ultimo": latest_values(frame),
+            "ultimo": ultimo,
             "series": series_payload(frame),
             "meta": _data_meta(ticker, period, frame),
+            "asesoria": {
+                "precio": advisor.advise_precio(
+                    ultimo.get("close"), ultimo.get("sma20"), ultimo.get("sma50"), ultimo.get("change_pct")
+                ),
+                "rsi": advisor.advise_rsi(ultimo.get("rsi14")),
+                "macd": advisor.advise_macd(
+                    ultimo.get("macd"), ultimo.get("macd_signal"), ultimo.get("macd_hist")
+                ),
+            },
         }
     except Exception as exc:
         raise HTTPException(status_code=502, detail=_message(exc))
@@ -66,6 +76,12 @@ def forecast(ticker: str = Query(..., min_length=1), period: str = "6mo"):
         frame = fetch_ohlcv(ticker, period)
         result = arima_benchmark.estimate(frame)
         result["forecast_dates"] = _next_business_days(result.get("last_close"), len(result["forecast"]))
+        result["asesoria"] = advisor.advise_arima(
+            result.get("next_close"),
+            result.get("last_close"),
+            result.get("order"),
+            result.get("adf_pvalue"),
+        )
         return {
             "ticker": ticker.upper(),
             "period": period,
@@ -95,9 +111,25 @@ def signal(
     period: str = "6mo",
     image_url: str | None = Query(default=None),
 ):
+    return _build_signal_response(ticker, period, image_url, image_bytes=None)
+
+
+@app.post("/api/signal")
+def signal_upload(
+    ticker: str = Form(...),
+    period: str = Form("6mo"),
+    file: UploadFile | None = File(default=None),
+):
+    image_bytes = None
+    if file is not None and file.filename:
+        image_bytes = file.file.read()
+    return _build_signal_response(ticker, period, image_url=None, image_bytes=image_bytes)
+
+
+def _build_signal_response(ticker, period, image_url, image_bytes):
     try:
         context = _build_context(ticker, period)
-        gemini = gemini_client.analyze(context, image_url)
+        gemini = gemini_client.analyze(context, image_url, image_bytes)
         decision = signal_engine.decide(context, gemini)
         company = companies.resolve(ticker)
         narracion = narrator.explain(context, decision)
@@ -150,6 +182,7 @@ def backtest(ticker: str = Query(..., min_length=1), period: str = "1y"):
         except Exception:
             arima = None
         result = backtest_engine.run(frame, arima)
+        result["asesoria"] = advisor.advise_backtest(result)
         return {"ticker": ticker.upper(), "period": period, "backtest": result}
     except HTTPException:
         raise
@@ -177,6 +210,44 @@ def refresh(tickers: str = Query(default=",".join(DEFAULT_TICKERS))):
             payload = {"error": _message(exc)}
         results.append({"ticker": ticker, "status": status, "datos": payload})
     return {"evento": _cron_origin(), "resultados": results}
+
+
+@app.get("/api/screener")
+def screener(
+    tickers: str = Query(default=",".join(companies.SCREENER_TICKERS)),
+    period: str = "6mo",
+):
+    items = [t.strip().upper() for t in tickers.split(",") if t.strip()]
+    companies_list = []
+    for ticker in items:
+        row = {"ticker": ticker, "error": None}
+        try:
+            frame = fetch_ohlcv(ticker, period)
+            company = companies.resolve(ticker)
+            ultimo = latest_values(frame)
+            row.update(
+                {
+                    "nombre": company["name"],
+                    "close": ultimo["close"],
+                    "change_pct": ultimo["change_pct"],
+                    "rsi14": ultimo["rsi14"],
+                    "macd_hist": ultimo["macd_hist"],
+                    "atr14": ultimo["atr14"],
+                    "sma20": ultimo["sma20"],
+                    "sma50": ultimo["sma50"],
+                    "ultima_fecha": ultimo["date"],
+                    "senal": advisor.advise_screener(
+                        ultimo["close"], ultimo["sma20"], ultimo["sma50"], ultimo["rsi14"], ultimo["macd_hist"]
+                    ),
+                    "asesoria": advisor.advise_precio(
+                        ultimo["close"], ultimo["sma20"], ultimo["sma50"], ultimo["change_pct"]
+                    ),
+                }
+            )
+        except Exception as exc:
+            row["error"] = _message(exc)
+        companies_list.append(row)
+    return {"period": period, "companies": companies_list}
 
 
 def _data_meta(ticker, period, frame):
