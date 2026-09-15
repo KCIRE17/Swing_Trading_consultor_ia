@@ -3,3 +3,57 @@ INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 INFO:     127.0.0.1:52051 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59727 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59727 - "GET /style.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59189 - "GET /app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59490 - "GET /favicon.ico HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59189 - "GET /api/indicators?ticker=SPY&period=6mo HTTP/1.1" 200 OK
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\app\arima_benchmark.py:44: FutureWarning: adfuller currently returns a plain tuple whose length depends on the store and autolag arguments. In release 0.16 or after July 2027, whichever is later, the default behavior will switch to always returning an ADFullerResult. Set result_object=True to switch now, or result_object=False to keep the current behavior and silence this warning.
+  pvalue = float(adfuller(current)[1])
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\app\arima_benchmark.py:44: FutureWarning: adfuller currently returns a plain tuple whose length depends on the store and autolag arguments. In release 0.16 or after July 2027, whichever is later, the default behavior will switch to always returning an ADFullerResult. Set result_object=True to switch now, or result_object=False to keep the current behavior and silence this warning.
+  pvalue = float(adfuller(current)[1])
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\app\arima_benchmark.py:44: FutureWarning: adfuller currently returns a plain tuple whose length depends on the store and autolag arguments. In release 0.16 or after July 2027, whichever is later, the default behavior will switch to always returning an ADFullerResult. Set result_object=True to switch now, or result_object=False to keep the current behavior and silence this warning.
+  pvalue = float(adfuller(current)[1])
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\app\arima_benchmark.py:44: FutureWarning: adfuller currently returns a plain tuple whose length depends on the store and autolag arguments. In release 0.16 or after July 2027, whichever is later, the default behavior will switch to always returning an ADFullerResult. Set result_object=True to switch now, or result_object=False to keep the current behavior and silence this warning.
+  pvalue = float(adfuller(current)[1])
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\app\arima_benchmark.py:44: FutureWarning: adfuller currently returns a plain tuple whose length depends on the store and autolag arguments. In release 0.16 or after July 2027, whichever is later, the default behavior will switch to always returning an ADFullerResult. Set result_object=True to switch now, or result_object=False to keep the current behavior and silence this warning.
+  pvalue = float(adfuller(current)[1])
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\.venv\Lib\site-packages\statsmodels\tsa\statespace\mlemodel.py:679: EstimationWarning: Non-stationary starting autoregressive parameters found. Using zeros as starting parameters.
+  start_params = self.start_params
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\.venv\Lib\site-packages\statsmodels\tsa\statespace\mlemodel.py:679: EstimationWarning: Non-stationary starting autoregressive parameters found. Using zeros as starting parameters.
+  start_params = self.start_params
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\.venv\Lib\site-packages\statsmodels\tsa\statespace\mlemodel.py:679: EstimationWarning: Non-invertible starting MA parameters found. Using zeros as starting parameters.
+  start_params = self.start_params
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\.venv\Lib\site-packages\statsmodels\tsa\statespace\mlemodel.py:679: EstimationWarning: Non-invertible starting MA parameters found. Using zeros as starting parameters.
+  start_params = self.start_params
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\app\arima_benchmark.py:44: FutureWarning: adfuller currently returns a plain tuple whose length depends on the store and autolag arguments. In release 0.16 or after July 2027, whichever is later, the default behavior will switch to always returning an ADFullerResult. Set result_object=True to switch now, or result_object=False to keep the current behavior and silence this warning.
+  pvalue = float(adfuller(current)[1])
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\.venv\Lib\site-packages\statsmodels\tsa\statespace\mlemodel.py:737: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
+  mlefit = super().fit(
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\.venv\Lib\site-packages\statsmodels\tsa\statespace\mlemodel.py:679: EstimationWarning: Non-stationary starting autoregressive parameters found. Using zeros as starting parameters.
+  start_params = self.start_params
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\.venv\Lib\site-packages\statsmodels\tsa\statespace\mlemodel.py:679: EstimationWarning: Non-invertible starting MA parameters found. Using zeros as starting parameters.
+  start_params = self.start_params
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\.venv\Lib\site-packages\statsmodels\tsa\statespace\mlemodel.py:679: EstimationWarning: Non-stationary starting autoregressive parameters found. Using zeros as starting parameters.
+  start_params = self.start_params
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\.venv\Lib\site-packages\statsmodels\tsa\statespace\mlemodel.py:679: EstimationWarning: Non-invertible starting MA parameters found. Using zeros as starting parameters.
+  start_params = self.start_params
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\.venv\Lib\site-packages\statsmodels\tsa\statespace\mlemodel.py:679: EstimationWarning: Non-stationary starting autoregressive parameters found. Using zeros as starting parameters.
+  start_params = self.start_params
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\.venv\Lib\site-packages\statsmodels\tsa\statespace\mlemodel.py:679: EstimationWarning: Non-invertible starting MA parameters found. Using zeros as starting parameters.
+  start_params = self.start_params
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\.venv\Lib\site-packages\statsmodels\tsa\statespace\mlemodel.py:679: EstimationWarning: Non-stationary starting autoregressive parameters found. Using zeros as starting parameters.
+  start_params = self.start_params
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\.venv\Lib\site-packages\statsmodels\tsa\statespace\mlemodel.py:679: EstimationWarning: Non-invertible starting MA parameters found. Using zeros as starting parameters.
+  start_params = self.start_params
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\.venv\Lib\site-packages\statsmodels\tsa\statespace\mlemodel.py:737: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
+  mlefit = super().fit(
+INFO:     127.0.0.1:52471 - "GET /api/forecast?ticker=SPY&period=6mo HTTP/1.1" 200 OK
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\.venv\Lib\site-packages\statsmodels\tsa\statespace\mlemodel.py:737: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
+  mlefit = super().fit(
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\.venv\Lib\site-packages\statsmodels\tsa\statespace\mlemodel.py:679: EstimationWarning: Non-stationary starting autoregressive parameters found. Using zeros as starting parameters.
+  start_params = self.start_params
+C:\Users\USER\Desktop\Swing_Trading_consultor_ia\.venv\Lib\site-packages\statsmodels\tsa\statespace\mlemodel.py:679: EstimationWarning: Non-invertible starting MA parameters found. Using zeros as starting parameters.
+  start_params = self.start_params
+INFO:     127.0.0.1:64450 - "GET /api/backtest?ticker=SPY&period=1y HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59727 - "GET /api/signal?ticker=SPY&period=6mo HTTP/1.1" 200 OK
