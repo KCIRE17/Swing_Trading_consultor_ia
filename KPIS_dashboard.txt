@@ -1,0 +1,23 @@
+1. Dashboard Descriptivo (Resumen de Mercado y Análisis Técnico)
+Este panel responde a la pregunta "¿Qué está pasando actualmente en el mercado?" y sirve para evaluar la salud actual de los activos. Los elementos y KPIs a mostrar son:
+- Screener Multiactivo (Tabla resumen): Una lista de los activos monitoreados que muestra su último precio de cierre, la variación porcentual del día y el volumen de transacciones.
+- Gráfico de Precios (OHLCV): Un gráfico de velas japonesas interactivo que muestra la evolución del precio de la acción.
+- KPIs de Tendencia (Medias Móviles): Las líneas SMA 20 (para el corto plazo) y SMA 50 (para el mediano plazo) superpuestas en el gráfico de precios para identificar la tendencia principal.
+- KPIs de Momentum (RSI 14): Un oscilador visual que emite alertas de precaución. Muestra si el activo está "sobrevendido" (barato, en valores menores o iguales a 35) o "sobrecomprado" (caro, en valores mayores o iguales a 70).
+- KPIs de Aceleración y Fuerza (MACD): Un histograma con líneas que indica si el movimiento del precio está perdiendo o ganando fuerza.
+- KPI de Volatilidad (ATR): Un medidor que cuantifica el nivel de movimiento o dispersión diaria que tiene la acción.
+2. Dashboard Predictivo (Inferencia Multimodal)
+Este tablero responde a la pregunta "¿Hacia dónde va el mercado y por qué?". Su objetivo es mostrar el análisis combinado de la Inteligencia Artificial y la estadística. Los elementos y KPIs a mostrar son:
+- Visor de la Noticia: Un panel gráfico donde el usuario puede ver la imagen, infografía o portada de la noticia financiera que la IA analizó.
+- KPI de Clasificación de la IA: Tarjetas que muestran la predicción de dirección (ALCISTA, NEUTRAL o BAJISTA), junto con el nivel de probabilidad o confianza (por ejemplo, 78%) y el nivel de riesgo cualitativo (BAJO, MEDIO o ALTO).
+- Módulo de Explicabilidad (Lenguaje Humano): Bloques de texto simples donde la IA entrega un resumen de la noticia y una justificación técnica de por qué los indicadores apoyan su predicción.
+- Proyección Estadística (ARIMA): Una curva o dato que muestra la proyección lineal del precio para los próximos 5 días, calculada matemáticamente para servir de contraste frente a la IA.
+3. Dashboard Prescriptivo (Backtesting y Señales)
+Este es el panel final de toma de decisiones. Responde a la pregunta "¿Qué debo hacer ahora?" recomendando una acción basada en pruebas históricas. Los elementos y KPIs a mostrar son:
+- Señal Operativa Actual: Una orden clara para el usuario: Comprar (BUY), Mantener (HOLD) o Vender (SELL).
+- KPIs de Gestión de Riesgo (Umbrales): Los precios exactos recomendados para salir de la operación y proteger el capital. Incluye el Stop-Loss (límite máximo de pérdida permitida) y el Take-Profit (nivel para asegurar ganancias), calculados gracias a la volatilidad.
+- Curva de Capital (Equity Curve): Un gráfico dinámico que compara de manera transparente cómo habría crecido el dinero usando esta estrategia frente a la opción tradicional de solo comprar y esperar (Buy and Hold).
+- KPIs de Desempeño Histórico (Backtesting): Las métricas definitivas que validan el sistema:  Retorno Acumulado: El porcentaje de ganancia total logrado en la simulación.
+- Tasa de Acierto (Win Rate): El porcentaje de las recomendaciones generadas que terminaron siendo ganadoras (la meta es superar el 55%).
+- Máximo Retroceso (Maximum Drawdown): El indicador clave de riesgo que muestra cuál fue la mayor caída sufrida por la cartera desde su punto más alto.
+- Sharpe Ratio: Un puntaje que demuestra que el rendimiento obtenido fue excelente para el nivel de riesgo asumido por el sistema.

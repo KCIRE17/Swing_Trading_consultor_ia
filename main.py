@@ -267,6 +267,7 @@ def screener(
                     "nombre": company["name"],
                     "close": ultimo["close"],
                     "change_pct": ultimo["change_pct"],
+                    "volume": ultimo["volume"],
                     "rsi14": ultimo["rsi14"],
                     "macd_hist": ultimo["macd_hist"],
                     "atr14": ultimo["atr14"],

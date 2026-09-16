@@ -193,6 +193,15 @@ function pct(value, digits = 2) {
   return `${v >= 0 ? "+" : ""}${v.toFixed(digits)}%`;
 }
 
+function compactNum(value) {
+  if (value === null || value === undefined || Number.isNaN(+value)) return "--";
+  const v = Number(value);
+  if (Math.abs(v) >= 1e9) return `${(v / 1e9).toFixed(2)}B`;
+  if (Math.abs(v) >= 1e6) return `${(v / 1e6).toFixed(2)}M`;
+  if (Math.abs(v) >= 1e3) return `${(v / 1e3).toFixed(1)}K`;
+  return String(Math.round(v));
+}
+
 function pointRadius(ctx) {
   const arr = ctx.dataset.data;
   return ctx.dataIndex === arr.length - 1 && ctx.chart.canvas.id !== "chartMacd" ? 4 : 0;
@@ -543,6 +552,7 @@ function renderMarketBoard(screenerData) {
         <div class="m-ticker">${esc(c.ticker)}</div>
         <div class="m-price ${upCls}">${fmt(c.close)}</div>
         <div class="m-sub">${pct(c.change_pct)}</div>
+        <div class="m-sub">Vol ${compactNum(c.volume)}</div>
         <div class="m-sub">RSI ${fmt(c.rsi14, 1)}${c.senal ? ` · ${sigLabel(c.senal)}` : ""}</div>
         ${err}
       </div>`;

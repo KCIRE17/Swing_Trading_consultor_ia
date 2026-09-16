@@ -1,0 +1,47 @@
+==============================================
+PASOS FINALES · Swing Trading Consultor IA
+Desde: vigilar el Actions — hasta: probar
+==============================================
+
+1) VIGILAR GITHUB ACTIONS
+   - GitHub → Actions → "Ingesta y modelo de sentimiento".
+   - Esperar el job "Entrenar ML + ETL a Supabase" en verde.
+   - La salida del paso "Verificar datos en Supabase" debe
+     mostrar algo como:
+        SPY: velas=250 noticias=25 forecast=ok
+     Eso confirma: tablas creadas + datos sembrados.
+
+2) VERIFICAR BASE DE DATOS (opcional)
+   - Supabase → SQL Editor → ejecutar:
+        select 'ohlcv' t, count(*) from ohlcv union all
+        select 'news', count(*) from news union all
+        select 'forecast_snapshots', count(*) from forecast_snapshots;
+   - Las 3 tablas deben tener filas > 0.
+
+3) DESPLEGAR EN VERCEL (web)
+   - vercel.com → Add New → Project → Import KCIRE17/Swing_Trading_consultor_ia.
+   - Framework: "Other" (FastAPI).
+   - Settings → Environment Variables (entorno Production):
+        DATABASE_URL    = cadena Transaction pooler :6543
+        GEMINI_API_KEY  = tu key   (opcional; sin ella degrada a reglas)
+        GEMINI_MODEL    = gemini-2.5-flash (opcional)
+   - Deploy → obtener dominio https://tu-proyecto.vercel.app
+
+4) PROBAR (terminal local)
+   - Smoke remoto contra producción:
+        .venv\Scripts\python scripts\smoke_remote.py --base https://tu-proyecto.vercel.app
+   - Abrir el dashboard y revisar:
+        Vista 1 Descriptiva : velas, tablero de 8 activos, indicadores.
+        Vista 2 Predictiva  : ARIMA 5 días + cono, tarjeta IA, noticias.
+        Vista 3 Prescriptiva: señal con SL/TP, checklist, matriz, backtest.
+   - API docs: https://tu-proyecto.vercel.app/docs
+   - Health (debe decir base_de_datos true):
+        https://tu-proyecto.vercel.app/api/health
+
+5) MANTENIMIENTO / NOTAS
+   - El ETL corre solo: cron diario 22:00 UTC + manual "Run workflow"
+     y en cada push a main.
+   - Supabase free pausa el proyecto tras 7 días sin actividad;
+     el cron diario lo mantiene activo.
+   - (Opcional) GitHub variable VERCEL_HOST = tu dominio, para que el
+     job "smoke" del workflow apunte a tu dominio real.
