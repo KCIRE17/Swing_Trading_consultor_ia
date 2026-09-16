@@ -1,0 +1,84 @@
+name: Ingesta y modelo de sentimiento
+
+on:
+  schedule:
+    - cron: "0 22 * * *"
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ingest-etl
+  cancel-in-progress: false
+
+jobs:
+  train-e-ingest:
+    name: Entrenar ML + ETL a Supabase
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Entrenar modelo de sentimiento (TF-IDF + LogisticRegression)
+        run: python scripts/train_sentiment.py
+
+      - name: Ingesta ETL a Supabase (OHLCV + ARIMA + noticias)
+        run: python scripts/ingest.py
+        timeout-minutes: 30
+
+      - name: Verificar datos en Supabase
+        run: |
+          python - <<'PY'
+          from app import db
+          for ticker in ["SPY", "AAPL", "NVDA", "MSFT"]:
+              frame = db.read_ohlcv(ticker, 10)
+              news = db.read_news(ticker, 3)
+              snap = db.read_latest_forecast(ticker)
+              print(f"{ticker}: velas={len(frame) if frame is not None else 0} "
+                    f"noticias={len(news)} forecast={'ok' if snap else 'none'}")
+          PY
+
+  smoke:
+    name: Smoke test contra el despliegue
+    needs: train-e-ingest
+    runs-on: ubuntu-latest
+    if: always()
+    continue-on-error: true
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      VERCEL_HOST: ${{ vars.VERCEL_HOST }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Smoke test de la API desplegada y la base de datos
+        run: |
+          BASE="${VERCEL_HOST:-https://swing-trading-consultor-ia.vercel.app}"
+          python scripts/smoke_remote.py --base "$BASE"
+        timeout-minutes: 10

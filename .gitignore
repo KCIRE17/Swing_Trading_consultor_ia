@@ -13,5 +13,9 @@ wheels/
 .env
 
 # Deploy logs
+*.log
 log.json
 *-log-export-*.json
+
+# Modelo de sentimiento (se reentrena en GitHub Actions)
+models/

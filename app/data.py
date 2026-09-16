@@ -1,13 +1,31 @@
 import math
 import time
+from datetime import date, timedelta
 
 import pandas as pd
 import yfinance as yf
 
+from . import db
 from .cache import DATA_CACHE
 from .indicators import augment
 
 PERIOD_LOOKBACK = {"1mo": 30, "3mo": 90, "6mo": 180, "1y": 360}
+FRESH_DAYS = 10
+
+_COLUMN_MAP = {
+    "Open": "open",
+    "High": "high",
+    "Low": "low",
+    "Close": "close",
+    "Volume": "volume",
+    "SMA20": "sma20",
+    "SMA50": "sma50",
+    "RSI14": "rsi14",
+    "MACD": "macd",
+    "MACD_SIGNAL": "macd_signal",
+    "MACD_HIST": "macd_hist",
+    "ATR14": "atr14",
+}
 
 
 def fetch_ohlcv(ticker, period="6mo", force=False):
@@ -17,13 +35,47 @@ def fetch_ohlcv(ticker, period="6mo", force=False):
         if cached is not None:
             return cached
 
-    frame = _download_with_retry(ticker.upper(), period)
-    frame = augment(frame)
+    frame = None
+    source = "supabase"
+    if db.available():
+        frame = db.read_ohlcv(ticker.upper(), PERIOD_LOOKBACK.get(period, 180))
+        if frame is not None and not _is_fresh(frame):
+            frame = None
+
+    if frame is None:
+        frame = _download_with_retry(ticker.upper(), period)
+        frame = augment(frame)
+        source = "yfinance"
+        _persist_to_db(ticker.upper(), frame)
+
     frame.attrs["ticker"] = ticker.upper()
     frame.attrs["period"] = period
+    frame.attrs["source"] = source
     DATA_CACHE.set(key, frame)
-    DATA_CACHE.set(f"ohlcv:{ticker.upper()}:meta", {"period": period, "points": len(frame)})
+    DATA_CACHE.set(f"ohlcv:{ticker.upper()}:meta", {"period": period, "points": len(frame), "source": source})
     return frame
+
+
+def _is_fresh(frame):
+    if frame is None or len(frame) == 0:
+        return False
+    last_date = frame.index[-1]
+    if hasattr(last_date, "to_pydatetime"):
+        last_date = last_date.to_pydatetime().date()
+    return (date.today() - last_date).days <= FRESH_DAYS
+
+
+def _persist_to_db(ticker, frame):
+    try:
+        rows = []
+        for idx, row in frame.iterrows():
+            item = {"date": _to_date(idx)}
+            for upper, lower in _COLUMN_MAP.items():
+                item[lower] = _clean_value(row[upper])
+            rows.append(item)
+        db.upsert_ohlcv(ticker, rows)
+    except Exception:
+        pass
 
 
 def _download_with_retry(ticker, period, attempts=2):
@@ -53,6 +105,24 @@ def _to_datetime(dates):
     if hasattr(dates, "dt"):
         return pd.to_datetime(dates.dt.tz_localize(None) if getattr(dates.dt, "tz", None) else dates)
     return pd.to_datetime(pd.Series(dates))
+
+
+def _to_date(value):
+    if hasattr(value, "date"):
+        return value.date()
+    return value
+
+
+def _clean_value(value):
+    if value is None:
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if math.isnan(number) or math.isinf(number):
+        return None
+    return number
 
 
 def series_payload(frame, limit=180):

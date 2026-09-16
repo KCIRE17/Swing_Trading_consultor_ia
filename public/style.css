@@ -87,11 +87,6 @@ select:focus {
   border-color: var(--accent);
 }
 
-#imageUrl {
-  flex: 1 1 260px;
-  min-width: 200px;
-}
-
 button {
   background: var(--accent);
   color: #06121f;
@@ -437,31 +432,6 @@ footer {
   color: var(--muted);
 }
 
-/* ============ Visor de imagen ============ */
-
-.image-viewer {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  min-height: 220px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--panel-2);
-  padding: 8px;
-  overflow: hidden;
-}
-
-.image-viewer img {
-  max-width: 100%;
-  max-height: 340px;
-  border-radius: 6px;
-  object-fit: contain;
-}
-
-.ia-grid {
-  align-items: start;
-}
-
 /* ============ Metodología ============ */
 
 .stepper {
@@ -724,4 +694,384 @@ footer {
   .two-col {
     grid-template-columns: 1fr;
   }
+}
+
+/* ============ Panel 3 vistas ============ */
+
+.light {
+  color: var(--accent);
+}
+
+.view-intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+}
+
+.view-intro p {
+  flex: 1 1 260px;
+  font-size: 13.5px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.view-chip {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.chip-descr {
+  color: var(--accent);
+  background: rgba(88, 166, 255, 0.15);
+  border: 1px solid rgba(88, 166, 255, 0.45);
+}
+
+.chip-pred {
+  color: var(--up);
+  background: rgba(38, 162, 105, 0.15);
+  border: 1px solid rgba(38, 162, 105, 0.45);
+}
+
+.chip-pres {
+  color: var(--hold);
+  background: rgba(210, 153, 34, 0.15);
+  border: 1px solid rgba(210, 153, 34, 0.45);
+}
+
+/* ============ Tablero de mercado ============ */
+
+.market-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.m-cell {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.m-cell.sig-buy {
+  border-color: var(--buy);
+}
+
+.m-cell.sig-hold {
+  border-color: var(--hold);
+}
+
+.m-cell.sig-sell {
+  border-color: var(--sell);
+}
+
+.m-ticker {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+
+.m-price {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 2px 0;
+}
+
+.m-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.m-err {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--sell);
+  font-weight: 700;
+}
+
+/* ============ Noticias ============ */
+
+.news-bar-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 28px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.news-track {
+  height: 8px;
+  background: var(--panel-2);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.news-fill {
+  height: 100%;
+  border-radius: 6px;
+}
+
+.news-list {
+  display: grid;
+  gap: 8px;
+  max-height: 340px;
+  overflow: auto;
+  margin-top: 12px;
+}
+
+.news-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.news-badge {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.n-pos {
+  color: var(--up);
+  background: rgba(38, 162, 105, 0.15);
+}
+
+.n-neu {
+  color: var(--muted);
+  background: rgba(139, 148, 158, 0.15);
+}
+
+.n-neg {
+  color: var(--sell);
+  background: rgba(241, 76, 76, 0.15);
+}
+
+.news-body {
+  min-width: 0;
+}
+
+.news-body a {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.news-body a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.news-meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+/* ============ Recomendación IA ============ */
+
+.rec-pill {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.rec-aumentar {
+  color: var(--up);
+  background: rgba(38, 162, 105, 0.15);
+  border: 1px solid rgba(38, 162, 105, 0.45);
+}
+
+.rec-mantener {
+  color: var(--hold);
+  background: rgba(210, 153, 34, 0.15);
+  border: 1px solid rgba(210, 153, 34, 0.45);
+}
+
+.rec-retirar {
+  color: var(--sell);
+  background: rgba(241, 76, 76, 0.15);
+  border: 1px solid rgba(241, 76, 76, 0.45);
+}
+
+.warn-text {
+  color: var(--hold);
+}
+
+/* ============ Checklist de confluencia ============ */
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.check-ok {
+  background: rgba(38, 162, 105, 0.08);
+  border: 1px solid rgba(38, 162, 105, 0.35);
+}
+
+.check-no {
+  background: rgba(241, 76, 76, 0.08);
+  border: 1px solid rgba(241, 76, 76, 0.35);
+}
+
+.check-mark {
+  flex: 0 0 auto;
+  font-weight: 800;
+}
+
+.check-ok .check-mark {
+  color: var(--up);
+}
+
+.check-no .check-mark {
+  color: var(--sell);
+}
+
+.check-det {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: right;
+}
+
+/* ============ Matriz de decisión ============ */
+
+.matrix th,
+.matrix td {
+  text-align: center;
+  white-space: normal;
+}
+
+.matrix th {
+  background: var(--panel-2);
+}
+
+.mz-buy {
+  background: rgba(38, 162, 105, 0.18);
+  color: var(--up);
+  font-weight: 700;
+}
+
+.mz-sell {
+  background: rgba(241, 76, 76, 0.18);
+  color: var(--sell);
+  font-weight: 700;
+}
+
+.mz-conflict {
+  background: rgba(210, 153, 34, 0.25);
+  color: var(--hold);
+  font-weight: 800;
+}
+
+.mz-mild-up {
+  background: rgba(38, 162, 105, 0.1);
+  color: var(--up);
+}
+
+.mz-mild-down {
+  background: rgba(241, 76, 76, 0.1);
+  color: var(--sell);
+}
+
+.mz-neu {
+  color: var(--muted);
+}
+
+.mz-current {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* ============ Hero de señal ============ */
+
+.signal-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hero-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hero-signal {
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.hero-signal.sig-buy {
+  color: var(--buy);
+}
+
+.hero-signal.sig-hold {
+  color: var(--hold);
+}
+
+.hero-signal.sig-sell {
+  color: var(--sell);
+}
+
+.hero-sub {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.hero-levels {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hero-levels .kpi {
+  min-width: 132px;
+}
+
+/* ============ Footer expandible ============ */
+
+.footer-box {
+  margin-top: 14px;
+}
+
+.footer-box summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--accent);
+  padding: 8px 0;
+}
+
+.footer-box summary::-webkit-details-marker {
+  display: none;
 }

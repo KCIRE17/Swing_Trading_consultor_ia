@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Arquitectura del Sistema · Swing Trading Consulter IA</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel2: #1c2129;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #26a269;
+    --red: #f14c4c;
+    --yellow: #d29922;
+    --purple: #bc4c9a;
+    --cyan: #6fddff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.5;
+    padding: 32px 20px 60px;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 34px; }
+  header h1 { font-size: 26px; color: var(--text); }
+  header p { color: var(--muted); font-size: 14px; margin-top: 6px; }
+  header .badge-row { margin-top: 12px; }
+  .badge {
+    display: inline-block; padding: 4px 12px; border-radius: 999px;
+    border: 1px solid var(--border); color: var(--muted); font-size: 12px; margin: 0 4px;
+  }
+  .badge-supabase { border-color: rgba(63,185,80,.5); color: #3fb950; }
+  .badge-gh { border-color: var(--border); color: var(--text); }
+  .badge-vercel { border-color: var(--accent); color: var(--accent); }
+  .badge-gemini { border-color: rgba(111,221,255,.5); color: var(--cyan); }
+  .badge-ml { border-color: rgba(188,76,154,.5); color: var(--purple); }
+
+  section { margin-top: 40px; }
+  h2 {
+    font-size: 19px; color: var(--text); margin-bottom: 6px;
+    padding-left: 12px; border-left: 4px solid var(--accent);
+  }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; padding-left: 12px; }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px; margin: 16px 0;
+  }
+
+  /* ---------- Nodos de flujo ---------- */
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; justify-content: center; }
+  .flow.v { flex-direction: column; align-items: stretch; max-width: 820px; margin: 0 auto; }
+  .node {
+    background: var(--panel2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; min-width: 150px; text-align: center;
+  }
+  .node b { display: block; font-size: 14px; }
+  .node small { display: block; color: var(--muted); font-size: 11px; margin-top: 3px; }
+  .node .ic { font-size: 20px; display: block; margin-bottom: 4px; }
+  .arrow { color: var(--accent); font-size: 22px; font-weight: 700; }
+  .arrow.down { writing-mode: vertical-rl; }
+
+  .node.primary { border-color: var(--accent); }
+  .node.green { border-color: var(--green); }
+  .node.purple { border-color: var(--purple); }
+  .node.cyan { border-color: var(--cyan); }
+  .node.yellow { border-color: var(--yellow); }
+
+  .box {
+    background: rgba(13,17,23,.5); border: 1px dashed var(--border); border-radius: 12px;
+    padding: 18px; margin: 14px 0;
+  }
+  .box .box-label {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .6px;
+    color: var(--muted); margin-bottom: 12px;
+  }
+  .box.github { border-color: rgba(210,153,34,.4); }
+  .box.vercel { border-color: rgba(88,166,255,.4); }
+  .box.supabase { border-color: rgba(63,185,80,.4); }
+
+  /* ---------- Esquema de datos ---------- */
+  .schema { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .table {
+    background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  }
+  .table .t-head {
+    background: rgba(88,166,255,.12); border-bottom: 1px solid var(--border);
+    padding: 8px 12px; font-weight: 600; font-size: 13px; color: var(--accent);
+  }
+  .table .t-head small { color: var(--muted); font-weight: 400; display: block; font-size: 10px; }
+  .table .t-body { padding: 6px 12px; font-family: "Cascadia Code", Consolas, monospace; font-size: 11px; }
+  .table .t-body div { padding: 2px 0; color: var(--muted); }
+  .table .t-body .pk { color: var(--yellow); }
+  .table .t-body .num { color: var(--cyan); }
+  .table .t-body .txt { color: var(--green); }
+
+  /* ---------- Mapeo 3 vistas ---------- */
+  .views { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .view {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px; position: relative;
+  }
+  .view .view-tag {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 600; letter-spacing: .4px; margin-bottom: 10px;
+  }
+  .tag-descr { background: rgba(88,166,255,.15); color: var(--accent); border: 1px solid rgba(88,166,255,.4); }
+  .tag-pred { background: rgba(188,76,154,.15); color: var(--purple); border: 1px solid rgba(188,76,154,.4); }
+  .tag-pres { background: rgba(38,162,105,.15); color: var(--green); border: 1px solid rgba(38,162,105,.4); }
+  .view h3 { font-size: 15px; margin-bottom: 6px; }
+  .view p { color: var(--muted); font-size: 12px; }
+  .view ul { list-style: none; margin-top: 10px; }
+  .view ul li { font-size: 12px; color: var(--text); padding: 3px 0; border-bottom: 1px dashed rgba(48,54,61,.5); }
+  .view ul li b { font-family: "Cascadia Code", Consolas, monospace; font-size: 11px; color: var(--accent); font-weight: 500; }
+
+  /* ---------- Leyenda / equilibrio ---------- */
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; }
+  .legend span { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+  footer { margin-top: 48px; text-align: center; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); padding-top: 18px; }
+  .hint { color: var(--muted); font-size: 12px; }
+  .mono { font-family: "Cascadia Code", Consolas, monospace; font-size: 11px; color: var(--cyan); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Arquitectura del Sistema · Swing Trading Consulter IA</h1>
+    <p>DSS Swing Trading con Business Analytics · IA cualitativa · Machine Learning clásico · 3 vistas</p>
+    <div class="badge-row">
+      <span class="badge badge-vercel">Vercel</span>
+      <span class="badge badge-supabase">Supabase Postgres</span>
+      <span class="badge badge-gh">GitHub Actions</span>
+      <span class="badge badge-gemini">Gemini (cualitativo)</span>
+      <span class="badge badge-ml">ML clásico (sentimiento)</span>
+      <span class="badge">100% en la nube</span>
+    </div>
+  </header>
+
+  <!-- ============ 1 · VISIÓN GENERAL ============ -->
+  <section>
+    <h2>1 · Visión general (inicio a fin)</h2>
+    <p class="sub">Nada depende de tu computadora: tú solo haces <span class="mono">git push</span>. El resto ocurre en la nube.</p>
+    <div class="card">
+      <div class="flow">
+        <div class="node yellow"><span class="ic">🐙</span><b>Git push</b><small>tu única acción</small></div>
+        <div class="arrow">→</div>
+        <div class="node primary"><span class="ic">⚙️</span><b>GitHub Actions</b><small>cron 22:00 UTC + dispatch + push<br/>ETL, entrenamiento ML, smoke</small></div>
+        <div class="arrow">→</div>
+        <div class="node cyan"><span class="ic">📈</span><b>Yahoo Finance</b><small>OHLCV + titulares (noticias)</small></div>
+        <div class="arrow">→</div>
+        <div class="node green"><span class="ic">🗄️</span><b>Supabase Postgres</b><small>ohlcv · news · forecast_snapshots · inference_log</small></div>
+        <div class="arrow">→</div>
+        <div class="node primary"><span class="ic">🚀</span><b>Vercel</b><small>FastAPI serverless + CDN estático</small></div>
+        <div class="arrow">→</div>
+        <div class="node purple"><span class="ic">🎛️</span><b>Dashboard 3 vistas</b><small>Descriptiva · Predictiva · Prescriptiva</small></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2 · ETL / INGESTA ============ -->
+  <section>
+    <h2>2 · ETL e ingesta (GitHub Actions)</h2>
+    <p class="sub">Se dispara por cron diario, manualmente o en el primer push. Crea tablas, entrena el ML y siembra datos.</p>
+    <div class="card">
+      <div class="box github">
+        <div class="box-label">▪ GitHub Actions — nube</div>
+        <div class="flow v">
+          <div class="node yellow"><b>Disparadores</b><small>cron 22:00 UTC · workflow_dispatch · push a main</small></div>
+          <div class="arrow down">▼</div>
+          <div class="node"><b>Setup</b><small>checkout · python 3.12 · pip install -e .</small></div>
+          <div class="arrow down">▼</div>
+          <div class="node yellow"><b>¿Existe models/sentiment_model.joblib?</b></div>
+          <div class="arrow down">▼</div>
+        </div>
+        <div class="flow">
+          <div class="node purple"><span class="ic">🤖</span><b>train_sentiment.py</b><small>TF-IDF + LogisticRegression<br/>dataset financiero etiquetado<br/>→ accuracy · F1 · report</small></div>
+          <div class="arrow">→</div>
+          <div class="node yellow"><b>models/sentiment_model.joblib</b></div>
+        </div>
+        <div class="flow v" style="margin-top: 14px;">
+          <div class="arrow down">▼</div>
+          <div class="node primary"><b>scripts/ingest.py</b><small>por cada ticker (8 activos)</small></div>
+        </div>
+        <div class="flow" style="margin-top: 14px;">
+          <div class="node cyan"><span class="ic">📈</span><b>yfinance → OHLCV</b><small>indicators: SMA/RSI/MACD/ATR</small></div>
+          <div class="arrow">→</div>
+          <div class="node green"><span class="ic">🗄️</span><b>Supabase · ohlcv</b></div>
+          <div class="arrow">→</div>
+          <div class="node cyan"><span class="ic">🔮</span><b>ARIMA statsmodels</b><small>ADF · AIC · 5 días</small></div>
+          <div class="arrow">→</div>
+          <div class="node green"><span class="ic">🗄️</span><b>Supabase · forecast_snapshots</b></div>
+        </div>
+        <div class="flow" style="margin-top: 14px;">
+          <div class="node cyan"><span class="ic">📰</span><b>yfinance → titulares</b><small>noticias de cada ticker (texto)</small></div>
+          <div class="arrow">→</div>
+          <div class="node purple"><span class="ic">🤖</span><b>app/sentiment.py</b><small>clasifica POS/NEU/NEG + probs</small></div>
+          <div class="arrow">→</div>
+          <div class="node green"><span class="ic">🗄️</span><b>Supabase · news</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3 · RUNTIME VERCEL ============ -->
+  <section>
+    <h2>3 · Tiempo de ejecución (Vercel)</h2>
+    <p class="sub">Los estáticos del dashboard nunca se apagan (CDN). La API FastAPI lee de Supabase y llama a Gemini solo cuando se requiere.</p>
+    <div class="card">
+      <div class="box vercel">
+        <div class="box-label">▪ Vercel — nube</div>
+        <div class="flow v">
+          <div class="node"><span class="ic">🖥️</span><b>Usuario / navegador</b><small>abre el dashboard</small></div>
+          <div class="arrow down">▼</div>
+        </div>
+        <div class="flow">
+          <div class="node primary"><b>CDN · static public/</b><small>HTML + JS + Chart.js</small></div>
+          <div class="node primary"><b>FastAPI serverless · /api/*</b><small>servido por Vercel</small></div>
+        </div>
+        <div class="flow" style="margin-top: 14px;">
+          <div class="node green"><b>Supabase Postgres</b><small>lectura: ohlcv · news · forecasts</small></div>
+          <div class="node cyan"><b>Gemini API</b><small>conclusión cualitativa (solo texto técnico + ARIMA)<br/>AUMENTAR / RETIRAR / MANTENER</small></div>
+        </div>
+        <div class="flow v" style="margin-top: 10px;">
+          <div class="arrow down">▼</div>
+          <div class="node purple"><b>JSON → Chart.js en las 3 vistas</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4 · MAPEO 3 VISTAS ============ -->
+  <section>
+    <h2>4 · Mapeo a las 3 vistas del dashboard</h2>
+    <p class="sub">Analítica Descriptiva → Predictiva → Prescriptiva, cada una alimentada por endpoints específicos.</p>
+    <div class="card">
+      <div class="views">
+        <div class="view">
+          <span class="view-tag tag-descr">DESCRIPTIVA · ¿Qué está pasando?</span>
+          <h3>Estado y evolución del mercado</h3>
+          <p>Hechos actuales e históricos sin interpretación futura.</p>
+          <ul>
+            <li><b>/api/indicators</b> + <b>/api/screener</b></li>
+            <li>KPIs generales · tablero de mercado (heatmap)</li>
+            <li>Velas japonesas · precio + SMA con bandas ATR</li>
+            <li>RSI · MACD · Volumen · histograma de retornos</li>
+          </ul>
+        </div>
+        <div class="view">
+          <span class="view-tag tag-pred">PREDICTIVA · ¿Qué puede pasar?</span>
+          <h3>Pronósticos cuantitativos y cualitativos</h3>
+          <p>Modelo econométrico + IA + sentimiento de noticias.</p>
+          <ul>
+            <li><b>/api/forecast</b> + <b>/api/news</b> + <b>/api/signal</b></li>
+            <li>ARIMA 5 días con cono de incertidumbre ±1·ATR</li>
+            <li>Tarjeta Gemini: dirección, probabilidad, riesgo</li>
+            <li>Sentimiento de noticias (ML clásico) · multi-ticker</li>
+          </ul>
+        </div>
+        <div class="view">
+          <span class="view-tag tag-pres">PRESCRIPTIVA · ¿Qué debo hacer?</span>
+          <h3>Decisión operativa y gestión de riesgo</h3>
+          <p>Acción concreta con niveles y validación histórica.</p>
+          <ul>
+            <li><b>/api/signal</b> + <b>/api/backtest</b></li>
+            <li>BUY / HOLD / SELL + SL 1.5·ATR + TP 3·ATR</li>
+            <li>Recomendación Gemini: AUMENTAR / RETIRAR / MANTENER</li>
+            <li>Checklist · narración · matriz de decisión · posición sugerida · backtest</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5 · ESQUEMA DE DATOS ============ -->
+  <section>
+    <h2>5 · Esquema de datos (Supabase Postgres)</h2>
+    <p class="sub">Tablas con claves primarias compuestas para cargar datos diarios sin duplicados.</p>
+    <div class="card">
+      <div class="schema">
+        <div class="table">
+          <div class="t-head">ohlcv<small>serie diaria con indicadores · PK (ticker, date)</small></div>
+          <div class="t-body">
+            <div class="pk"><b>ticker</b> text PK</div>
+            <div class="pk"><b>date</b> date PK</div>
+            <div class="num">open · high · low · close float</div>
+            <div class="num">volume int</div>
+            <div class="num">sma20 · sma50 float</div>
+            <div class="num">rsi14 · macd · macd_signal · macd_hist float</div>
+            <div class="num">atr14 float</div>
+          </div>
+        </div>
+        <div class="table">
+          <div class="t-head">news<small>titulares con sentimiento ML · PK url</small></div>
+          <div class="t-body">
+            <div class="txt">ticker text</div>
+            <div class="txt">titulo · publisher text</div>
+            <div class="pk"><b>url</b> text PK</div>
+            <div class="txt">fecha date</div>
+            <div class="txt">sentimiento text (POS/NEU/NEG)</div>
+            <div class="num">prob_pos · prob_neu · prob_neg float</div>
+          </div>
+        </div>
+        <div class="table">
+          <div class="t-head">forecast_snapshots<small>pronóstico ARIMA diario · PK (ticker, fecha_generado)</small></div>
+          <div class="t-body">
+            <div class="pk"><b>ticker</b> text PK</div>
+            <div class="pk"><b>fecha_generado</b> timestamp PK</div>
+            <div class="num">horizonte int</div>
+            <div class="txt">forecast_json json</div>
+            <div class="num">next_close float</div>
+            <div class="txt">order_json json · aic float · method text</div>
+          </div>
+        </div>
+        <div class="table">
+          <div class="t-head">inference_log<small>historial de conclusiones Gemini · PK id</small></div>
+          <div class="t-body">
+            <div class="pk"><b>id</b> serial PK</div>
+            <div class="txt">ticker text · fecha timestamp</div>
+            <div class="txt">prediccion text (ALCISTA/NEUTRAL/BAJISTA)</div>
+            <div class="num">probabilidad float</div>
+            <div class="txt">nivel_riesgo text · fuente text</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 6 · FLUJO GLOBAL ============ -->
+  <section>
+    <h2>6 · Flujo global y equivalencia</h2>
+    <div class="card">
+      <div style="font-family:'Cascadia Code',Consolas,monospace; font-size:13px; color:var(--muted); white-space:pre; overflow-x:auto;">
+ git push → GitHub Actions (ETL + ML) → Supabase ⇄ Vercel (FastAPI + Gemini) → 3 vistas
+     ↑__________ cron 22:00 UTC __________↑            todo en la nube · nada local
+      </div>
+      <div class="legend" style="margin-top: 14px;">
+        <span><span class="dot" style="background:var(--accent)"></span> Plataforma/Vercel</span>
+        <span><span class="dot" style="background:#3fb950"></span> Base de datos/Supabase</span>
+        <span><span class="dot" style="background:var(--yellow)"></span> Orquestador/GitHub Actions</span>
+        <span><span class="dot" style="background:var(--cyan)"></span> IA cualitativa/Gemini</span>
+        <span><span class="dot" style="background:var(--purple)"></span> ML clásico/sentimiento</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Prototipo académico para fines de investigación · DSS Swing Trading con Business Analytics e IA · Equipo 7<br/>
+    No constituye asesoría de inversión personalizada · No ejecuta órdenes con dinero real
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,22 +1,21 @@
 import os
 
 import pandas as pd
-from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
-from pydantic import BaseModel
 
 from app import advisor, arima_benchmark, backtest as backtest_engine
-from app import companies, gemini_client, narrator, signal_engine
+from app import companies, db, gemini_client, narrator, signal_engine
 from app.cache import DATA_CACHE
 from app.data import fetch_ohlcv, series_payload
 from app.indicators import latest_values
 
 app = FastAPI(
     title="Swing Trading Consulter IA",
-    description="MVP del sistema de soporte a la toma de decisiones para Swing Trading "
-    "con Business Analytics e IA multimodal.",
-    version="0.1.0",
+    description="Sistema de soporte a la toma de decisiones para Swing Trading con "
+    "Business Analytics, IA cualitativa y Machine Learning clásico (3 vistas).",
+    version="0.2.0",
 )
 
 app.add_middleware(
@@ -29,18 +28,20 @@ app.add_middleware(
 DEFAULT_TICKERS = ["SPY", "AAPL", "NVDA", "MSFT"]
 
 
-class AnalyzeRequest(BaseModel):
-    ticker: str
-    period: str = "6mo"
-    image_url: str | None = None
-
-
 @app.get("/api/health")
 def health():
     return {
         "status": "ok",
+        "base_de_datos": db.connected() if db.available() else False,
+        "sentimiento_modelo": _sentiment_available(),
         "gemini_key_present": bool(os.environ.get("GEMINI_API_KEY")),
     }
+
+
+def _sentiment_available():
+    from app import sentiment
+
+    return sentiment.available()
 
 
 @app.get("/api/indicators")
@@ -73,9 +74,7 @@ def indicators(ticker: str = Query(..., min_length=1), period: str = "6mo"):
 @app.get("/api/forecast")
 def forecast(ticker: str = Query(..., min_length=1), period: str = "6mo"):
     try:
-        frame = fetch_ohlcv(ticker, period)
-        result = arima_benchmark.estimate(frame)
-        result["forecast_dates"] = _next_business_days(result.get("last_close"), len(result["forecast"]))
+        result = _forecast_snapshot(ticker.upper(), period)
         result["asesoria"] = advisor.advise_arima(
             result.get("next_close"),
             result.get("last_close"),
@@ -93,43 +92,52 @@ def forecast(ticker: str = Query(..., min_length=1), period: str = "6mo"):
         raise HTTPException(status_code=502, detail=_message(exc))
 
 
-@app.post("/api/analyze")
-def analyze(request: AnalyzeRequest):
-    try:
-        context = _build_context(request.ticker, request.period)
-        gemini = gemini_client.analyze(context, request.image_url)
-        return {"ticker": request.ticker.upper(), "analisis": gemini}
-    except HTTPException:
-        raise
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=_message(exc))
+def _forecast_snapshot(ticker, period):
+    frame = fetch_ohlcv(ticker, period)
+    last_close = latest_values(frame).get("close")
+    snapshot = None
+    if db.available():
+        try:
+            snapshot = db.read_latest_forecast(ticker)
+        except Exception:
+            snapshot = None
+    if snapshot is not None and snapshot.get("forecast"):
+        order = snapshot.get("order") or {}
+        result = {
+            "adf_pvalue": None,
+            "d": order.get("d"),
+            "order": order,
+            "aic": snapshot.get("aic"),
+            "forecast": [float(v) for v in snapshot["forecast"]],
+            "forecast_dates": [],
+            "last_close": round(last_close, 4) if last_close is not None else None,
+            "next_close": (
+                round(float(snapshot.get("next_close")), 4) if snapshot.get("next_close") is not None else None
+            ),
+            "method": snapshot.get("method", "arima"),
+            "points": int(len(frame)),
+            "fecha_generado": str(snapshot.get("fecha_generado")) if snapshot.get("fecha_generado") else None,
+            "fuente": "supabase",
+        }
+    else:
+        result = arima_benchmark.estimate(frame)
+        result["fuente"] = "en_vivo"
+    result["forecast_dates"] = _next_business_days(result.get("last_close"), len(result.get("forecast") or []))
+    return result
 
 
 @app.get("/api/signal")
 def signal(
     ticker: str = Query(..., min_length=1),
     period: str = "6mo",
-    image_url: str | None = Query(default=None),
 ):
-    return _build_signal_response(ticker, period, image_url, image_bytes=None)
+    return _build_signal_response(ticker, period)
 
 
-@app.post("/api/signal")
-def signal_upload(
-    ticker: str = Form(...),
-    period: str = Form("6mo"),
-    file: UploadFile | None = File(default=None),
-):
-    image_bytes = None
-    if file is not None and file.filename:
-        image_bytes = file.file.read()
-    return _build_signal_response(ticker, period, image_url=None, image_bytes=image_bytes)
-
-
-def _build_signal_response(ticker, period, image_url, image_bytes):
+def _build_signal_response(ticker, period):
     try:
         context = _build_context(ticker, period)
-        gemini = gemini_client.analyze(context, image_url, image_bytes)
+        gemini = gemini_client.analyze(context)
         decision = signal_engine.decide(context, gemini)
         company = companies.resolve(ticker)
         narracion = narrator.explain(context, decision)
@@ -150,11 +158,40 @@ def _build_signal_response(ticker, period, image_url, image_bytes):
         raise HTTPException(status_code=502, detail=_message(exc))
 
 
+@app.get("/api/news")
+def news(ticker: str = Query(..., min_length=1), limit: int = Query(default=12)):
+    try:
+        items = db.read_news(ticker.upper(), limit) if db.available() else []
+        noticias = [
+            {
+                "titulo": row.get("titulo"),
+                "url": row.get("url"),
+                "publisher": row.get("publisher"),
+                "fecha": _iso(row.get("fecha")),
+                "fecha_extraido": str(row.get("fecha_extraido")),
+                "sentimiento": row.get("sentimiento"),
+                "prob_pos": row.get("prob_pos"),
+                "prob_neu": row.get("prob_neu"),
+                "prob_neg": row.get("prob_neg"),
+            }
+            for row in items
+        ]
+        return {"ticker": ticker.upper(), "noticias": noticias}
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=_message(exc))
+
+
+def _iso(value):
+    if not value:
+        return None
+    return str(value)[:19]
+
+
 @app.get("/api/interpret")
 def interpret(ticker: str = Query(..., min_length=1), period: str = "6mo"):
     try:
         context = _build_context(ticker, period)
-        gemini = gemini_client.analyze(context, None)
+        gemini = gemini_client.analyze(context)
         decision = signal_engine.decide(context, gemini)
         company = companies.resolve(ticker)
         narracion = narrator.explain(context, decision)
@@ -256,9 +293,10 @@ def _data_meta(ticker, period, frame):
         last_date = str(frame.index[-1].date())
     except Exception:
         pass
+    source = frame.attrs.get("source", "supabase")
     return {
-        "proveedor": "Yahoo Finance (yfinance)",
-        "tipo": "OHLCV historico en vivo",
+        "proveedor": "Supabase Postgres" if source == "supabase" else "Yahoo Finance (recarga en vivo)",
+        "tipo": "OHLCV historico + indicadores",
         "period_solicitado": period,
         "n_velas": int(len(frame)),
         "ultima_fecha": last_date,
@@ -269,6 +307,7 @@ def _build_context(ticker, period):
     frame = fetch_ohlcv(ticker, period)
     context = latest_values(frame)
     context["ticker"] = ticker.upper()
+    context["noticias"] = _news_summary(ticker.upper())
     try:
         forecast_result = arima_benchmark.estimate(frame)
         context["arima_forecast"] = forecast_result["forecast"]
@@ -279,6 +318,25 @@ def _build_context(ticker, period):
         context["arima_forecast"] = None
         context["arima_next"] = None
     return context
+
+
+def _news_summary(ticker):
+    counts = {"POS": 0, "NEU": 0, "NEG": 0}
+    if db.available():
+        try:
+            for row in db.read_news(ticker, 15):
+                code = row.get("sentimiento")
+                if code in counts:
+                    counts[code] += 1
+        except Exception:
+            pass
+    total = sum(counts.values())
+    return {
+        "total": total,
+        "counts": counts,
+        "pos_ratio": round(counts["POS"] / total, 4) if total else None,
+        "neg_ratio": round(counts["NEG"] / total, 4) if total else None,
+    }
 
 
 def _next_business_days(last_close, n):
@@ -294,7 +352,7 @@ def _message(exc):
 
 
 def _cron_origin():
-    return "vercel-cron" if os.environ.get("VERCEL") else "manual"
+    return "manual"
 
 
 _FAVICON_SVG = (

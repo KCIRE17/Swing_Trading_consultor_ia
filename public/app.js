@@ -6,6 +6,11 @@ Chart.defaults.borderColor = "rgba(48,54,61,1)";
 const up = "#26a269";
 const down = "#f14c4c";
 const accent = "#58a6ff";
+const cyan = "#6fddff";
+const yellow = "#d29922";
+const purple = "#bc4c9a";
+
+const state = {};
 
 function byId(id) {
   return document.getElementById(id);
@@ -17,49 +22,67 @@ const chartDefs = {
     canvas: "chartPrice",
     datasets: [
       { label: "Precio de cierre", data: [], borderColor: accent, backgroundColor: "rgba(88,166,255,0.08)", fill: true },
-      { label: "Promedio 20 días (SMA20)", data: [], borderColor: "#d29922", backgroundColor: "#d29922" },
-      { label: "Promedio 50 días (SMA50)", data: [], borderColor: "#bc4c9a", backgroundColor: "#bc4c9a" },
+      { label: "Promedio 20 días (SMA20)", data: [], borderColor: yellow, backgroundColor: yellow, tooltipExtra: () => "precio promedio de los últimos 20 días" },
+      { label: "Promedio 50 días (SMA50)", data: [], borderColor: purple, backgroundColor: purple, tooltipExtra: () => "precio promedio de los últimos 50 días" },
+      { label: "Banda inferior (-1 ATR)", data: [], legendHidden: true, tooltip: false, borderWidth: 0, pointRadius: 0 },
+      { label: "Banda superior (+1 ATR)", data: [], fill: "-1", backgroundColor: "rgba(210,153,34,0.16)", legendHidden: true, tooltip: false, borderWidth: 0, pointRadius: 0 },
     ],
     spanGaps: true,
-    tooltipExtra: (ctx) =>
-      ctx.dataset.label === "Precio de cierre"
-        ? "precio con el que cerró ese día"
-        : ctx.dataset.label.includes("20")
-          ? "precio promedio de los últimos 20 días"
-          : "precio promedio de los últimos 50 días",
   },
   rsi: {
     canvas: "chartRsi",
     datasets: [
-      { label: "Fuerza del movimiento (RSI)", data: [], borderColor: "#6fddff", backgroundColor: "rgba(111,221,255,0.08)", fill: true },
-      { label: "Zona de compra intensa (70)", data: [], borderColor: "rgba(241,76,76,0.5)", pointRadius: 0, borderDash: [5, 5], tooltip: false },
-      { label: "Zona de venta intensa (30)", data: [], borderColor: "rgba(38,162,105,0.5)", pointRadius: 0, borderDash: [5, 5], tooltip: false },
+      { label: "Fuerza del movimiento (RSI)", data: [], borderColor: cyan, backgroundColor: "rgba(111,221,255,0.08)", fill: true },
+      { label: "Compra intensa (70)", data: [], borderColor: "rgba(241,76,76,0.5)", pointRadius: 0, borderDash: [5, 5], tooltip: false },
+      { label: "Venta intensa (30)", data: [], borderColor: "rgba(38,162,105,0.5)", pointRadius: 0, borderDash: [5, 5], tooltip: false },
     ],
     spanGaps: true,
     tooltipExtra: (ctx) =>
       ctx.parsed.y >= 70
-        ? "compra muy intensa: la subida fue fuerte, es probable una corrección"
+        ? "compra muy intensa: subida fuerte, probable corrección"
         : ctx.parsed.y <= 30
-          ? "venta muy intensa: la caída fue fuerte, es probable un rebote"
+          ? "venta muy intensa: caída fuerte, probable rebote"
           : "zona normal, sin extremos",
   },
   macd: {
     canvas: "chartMacd",
     datasets: [
       { type: "bar", label: "Impulso (barras)", data: [], backgroundColor: [], borderColor: [] },
-      { label: "Línea de referencia", data: [], borderColor: "#d29922", backgroundColor: "#d29922", fill: false },
+      { label: "Línea de referencia", data: [], borderColor: yellow, backgroundColor: yellow, fill: false },
     ],
     spanGaps: true,
     tooltipExtra: (ctx) =>
       ctx.dataset.type === "bar"
-        ? (ctx.parsed.y >= 0 ? "impulso alcista (barras verdes)" : "impulso bajista (barras rojas)")
+        ? (ctx.parsed.y >= 0 ? "impulso alcista" : "impulso bajista")
         : "línea de referencia del impulso",
+  },
+  volume: {
+    canvas: "chartVolume",
+    datasets: [{ type: "bar", label: "Volumen", data: [], backgroundColor: [], borderColor: [] }],
+    spanGaps: true,
+    tooltipExtra: (ctx) => (ctx.parsed.y >= 0 ? "acciones negociadas" : "acciones negociadas"),
+  },
+  returns: {
+    canvas: "chartReturns",
+    datasets: [{ type: "bar", label: "Frecuencia", data: [], backgroundColor: "rgba(88,166,255,0.75)", borderColor: accent }],
+    spanGaps: true,
+    tooltipExtra: (ctx) => `retornos entre ${ctx.parsed.x}% y ${ctx.parsed.x + 1}%`,
+  },
+  forecast: {
+    canvas: "chartForecast",
+    datasets: [
+      { label: "Límite inferior", data: [], legendHidden: true, tooltip: false, borderWidth: 0, pointRadius: 0 },
+      { label: "Cono de incertidumbre", data: [], fill: "-1", backgroundColor: "rgba(210,153,34,0.18)", legendHidden: true, tooltip: false, borderWidth: 0, pointRadius: 0 },
+      { label: "Pronóstico ARIMA (5 días)", data: [], borderColor: cyan, borderDash: [6, 4], pointRadius: 3, backgroundColor: cyan, tooltipExtra: () => "precio proyectado por el modelo ARIMA" },
+      { label: "Precio histórico", data: [], borderColor: accent, pointRadius: 0 },
+    ],
+    spanGaps: true,
   },
   backtest: {
     canvas: "chartBacktest",
     datasets: [
       { label: "Con la estrategia", data: [], borderColor: accent, backgroundColor: "rgba(88,166,255,0.08)", fill: true },
-      { label: "Mantenerse sin operar", data: [], borderColor: "#d29922", backgroundColor: "#d29922" },
+      { label: "Mantenerse sin operar", data: [], borderColor: yellow, backgroundColor: yellow },
     ],
     spanGaps: true,
     tooltipExtra: (ctx) =>
@@ -67,19 +90,21 @@ const chartDefs = {
         ? "evolución de S/1.00 aplicando la estrategia"
         : "evolución de S/1.00 sin operar",
   },
+  forecastOnly: null,
 };
 
 function initCharts() {
-  Object.values(chartDefs).forEach((def) => {
+  Object.values(chartDefs).filter(Boolean).forEach((def) => {
     const canvas = byId(def.canvas);
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     const datasets = def.datasets.map((d) => ({
       ...d,
-      pointRadius: d.pointRadius === 0 || d.tooltip === false ? 0 : pointRadius,
+      pointRadius: d.pointRadius === 0 || d.tooltip === false ? 0 : 3,
       pointHoverRadius: d.tooltip === false ? 0 : 5,
       pointBackgroundColor: d.borderColor,
       pointBorderColor: d.borderColor,
+      fill: d.fill === true ? "origin" : d.fill,
     }));
     charts[def.canvas] = new Chart(ctx, {
       type: "line",
@@ -90,7 +115,15 @@ function initCharts() {
         spanGaps: def.spanGaps,
         interaction: { mode: "index", intersect: false },
         plugins: {
-          legend: { labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } },
+          legend: {
+            display: def.legendHidden ? false : true,
+            labels: {
+              usePointStyle: true,
+              boxWidth: 8,
+              font: { size: 11 },
+              filter: (item, data) => !data.datasets[item.datasetIndex].legendHidden,
+            },
+          },
           tooltip: { callbacks: { title: tooltipTitle, label: tooltipLabel } },
         },
         scales: {
@@ -108,11 +141,11 @@ function initCharts() {
 }
 
 function updateChart(key, labels, datasetsData) {
-  const chart = charts[chartDefs[key].canvas];
+  const chart = charts[chartDefs[key]?.canvas];
   if (!chart) return;
   chart.data.labels = labels;
   chartDefs[key].datasets.forEach((def, i) => {
-    chart.data.datasets[i].data = datasetsData[i];
+    chart.data.datasets[i].data = datasetsData[i] || [];
     if (def.type === "bar") {
       chart.data.datasets[i].backgroundColor = datasetsData[i].map((v) => (v >= 0 ? up : down));
       chart.data.datasets[i].borderColor = datasetsData[i].map((v) => (v >= 0 ? up : down));
@@ -123,11 +156,6 @@ function updateChart(key, labels, datasetsData) {
 
 async function apiGet(path) {
   const response = await fetch(path, { headers: { Accept: "application/json" } });
-  return _parse(response);
-}
-
-async function apiPost(path, formData) {
-  const response = await fetch(path, { method: "POST", body: formData, headers: { Accept: "application/json" } });
   return _parse(response);
 }
 
@@ -159,11 +187,11 @@ function fmt(value, digits = 2) {
   return Number(value).toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 }
 
-function seCal(value) {
-  return value === null || value === undefined || Number.isNaN(+value) ? "--" : `${Number(value).toFixed(2)}`;
+function pct(value, digits = 2) {
+  if (value === null || value === undefined || Number.isNaN(+value)) return "--";
+  const v = Number(value);
+  return `${v >= 0 ? "+" : ""}${v.toFixed(digits)}%`;
 }
-
-/* ---------------- Helper visuales Chart.js ---------------- */
 
 function pointRadius(ctx) {
   const arr = ctx.dataset.data;
@@ -175,7 +203,7 @@ function tooltipTitle(items) {
 }
 
 function tooltipLabel(ctx) {
-  const def = Object.values(chartDefs).find((d) => d.canvas === ctx.chart.canvas.id);
+  const def = Object.values(chartDefs).find((d) => d && d.canvas === ctx.chart.canvas.id);
   if (def && def.tooltip === false) return null;
   const extra = def?.tooltipExtra ? def.tooltipExtra(ctx) : "";
   return `${ctx.dataset.label}: ${fmt(ctx.parsed.y)}${extra ? ` — ${extra}` : ""}`;
@@ -219,34 +247,6 @@ function kpiCard(label, value, sub = "", cls = "") {
   return `<div class="kpi"><div class="label">${esc(label)}</div><div class="value ${cls}">${value}</div>${sub ? `<div class="sub">${esc(sub)}</div>` : ""}</div>`;
 }
 
-function renderKpis(data) {
-  const ctx = data.contexto_tecnico;
-  const senal = data.senal;
-  const ia = data.analisis_ia;
-
-  const h1 = document.querySelector("header h1");
-  if (h1) h1.textContent = `${data.nombre || ctx.ticker} (${ctx.ticker}) · DSS Swing Trading`;
-
-  const upCls = ctx.change_pct >= 0 ? "up" : "down";
-  const signalClass = senal.direccion === "BUY" ? "sig-buy" : senal.direccion === "SELL" ? "sig-sell" : "sig-hold";
-  const rsiNote = ctx.rsi14 >= 70 ? "Compra muy intensa" : ctx.rsi14 <= 35 ? "Venta muy intensa" : "Zona normal";
-
-  const html =
-    kpiCard("Precio", fmt(ctx.close), ctx.date || "", upCls) +
-    kpiCard("Variación diaria", `${fmt(ctx.change_pct)} %`, "", upCls) +
-    kpiCard("Fuerza del movimiento", fmt(ctx.rsi14), rsiNote) +
-    kpiCard("Movimiento típico", fmt(ctx.atr14)) +
-    kpiCard("Señal", sigLabel(senal.direccion), !ia.probabilidad ? "" : `${Math.round(ia.probabilidad * 100)} % confianza`, signalClass) +
-    kpiCard("Tope de pérdida", fmt(senal.stop_loss)) +
-    kpiCard("Objetivo de ganancia", fmt(senal.take_profit)) +
-    kpiCard("Nivel de riesgo", ia.nivel_riesgo || "--");
-
-  ["kpisTop", "kpisResumen"].forEach((id) => {
-    const el = byId(id);
-    if (el) el.innerHTML = html;
-  });
-}
-
 /* ---------------- Consejos por gráfico ---------------- */
 
 const adviceColor = { Apto: "ok", "Precaución": "warn", "No invertir": "danger" };
@@ -280,10 +280,14 @@ function prediccionLabel(p) {
   return p;
 }
 
+function sentimientoLabel(code) {
+  return { POS: "Positivo", NEU: "Neutral", NEG: "Negativo" }[code] || code;
+}
+
 /* ---------------- Screener (selección de empresa) ---------------- */
 
 const COMPANIES = [
-  { t: "SPY", n: "S&P 500" },
+  { t: "SPY", n: "S&P 500 ETN" },
   { t: "AAPL", n: "Apple" },
   { t: "NVDA", n: "NVIDIA" },
   { t: "MSFT", n: "Microsoft" },
@@ -292,6 +296,7 @@ const COMPANIES = [
   { t: "GOOGL", n: "Alphabet (Google)" },
   { t: "META", n: "Meta" },
 ];
+const SCREENER = COMPANIES;
 
 function fillCompanySelects() {
   const options = COMPANIES.map((c) => `<option value="${c.t}">${c.n} (${c.t})</option>`).join("");
@@ -442,7 +447,7 @@ function drawCandleBase(mx, my) {
     ctx.fillStyle = "#e6edf3";
     ctx.font = "11px Segoe UI";
     ctx.fillText(
-      lastC.close.toFixed(2),
+      String(lastC.close.toFixed(2)),
       padL + slot * (candles.length - 1) + slot / 2 - bodyW / 2,
       yy(lastC.close) - 6
     );
@@ -483,136 +488,418 @@ function drawCandleTooltip(ctx, mx, my, c) {
   ctx.textBaseline = "alphabetic";
 }
 
-/* ---------------- Análisis principal ---------------- */
+/* ================= VISTA 1 · DESCRIPTIVA ================= */
 
-async function run() {
-  const tickerInput = byId("ticker");
-  const ticker = (tickerInput?.value.trim().toUpperCase() || "SPY") ;
-  const period = byId("period")?.value || "6mo";
-  const imageUrl = byId("imageUrl")?.value.trim() || "";
-  const fileInput = byId("imageFile");
-  const selectedFile = fileInput?.files?.[0] || null;
+function renderDescriptiva(ind, screenerData) {
+  const ult = ind.ultimo;
+  const s = ind.series;
+  const upCls = ult.change_pct >= 0 ? "up" : "down";
+  const rsiNote = ult.rsi14 >= 70 ? "Compra muy intensa" : ult.rsi14 <= 35 ? "Venta muy intensa" : "Zona normal";
+  const kpi = byId("kpisDescr");
+  kpi.innerHTML =
+    kpiCard("Precio", fmt(ult.close), ult.date || "", upCls) +
+    kpiCard("Variación diaria", pct(ult.change_pct), "", upCls) +
+    kpiCard("Fuerza (RSI)", fmt(ult.rsi14, 1), rsiNote) +
+    kpiCard("Volatilidad (ATR)", fmt(ult.atr14)) +
+    kpiCard("Volumen", fmt(ult.volume, 0)) +
+    kpiCard("Media 20/50", `${fmt(ult.sma20)} / ${fmt(ult.sma50)}`) +
+    kpiCard("Proveedor", ind.meta?.proveedor || "--", ind.meta?.ultima_fecha || "--");
 
-  const btn = byId("runBtn");
-  const status = byId("status");
-  if (btn) btn.disabled = true;
-  setStatus("Descargando datos y calculando señal...");
-  hideError();
+  renderMarketBoard(screenerData);
 
-  showImagePreview(selectedFile || (imageUrl ? { url: imageUrl } : null));
-
-  try {
-    const indicatorsP = apiGet(`/api/indicators?ticker=${encodeURIComponent(ticker)}&period=${encodeURIComponent(period)}`);
-    const signalP = buildSignalRequest(ticker, period, imageUrl, selectedFile);
-    const arimaP = apiGet(`/api/forecast?ticker=${encodeURIComponent(ticker)}&period=${encodeURIComponent(period)}`);
-    const btP = apiGet(`/api/backtest?ticker=${encodeURIComponent(ticker)}&period=1y`);
-
-    const [indicatorsData, signalData, arimaData, btData] = await Promise.all([indicatorsP, signalP, arimaP, btP]);
-
-    renderKpis(signalData);
-    renderCharts(indicatorsData);
-    renderArima(arimaData.forecast, ticker);
-    renderIA(signalData, selectedFile || imageUrl);
-    renderNarracion(signalData);
-    renderFuente(indicatorsData.meta, signalData.nombre, ticker);
-
-    renderAdvice("advicePrecio", indicatorsData.asesoria?.precio);
-    renderAdvice("advicePrecioCandle", indicatorsData.asesoria?.precio);
-    renderAdvice("adviceRsi", indicatorsData.asesoria?.rsi);
-    renderAdvice("adviceMacd", indicatorsData.asesoria?.macd);
-    renderAdvice("adviceArima", arimaData.forecast?.asesoria);
-
-    renderBacktest(btData.backtest);
-
-    setStatus(`Listo · ${ticker} · ${new Date().toLocaleTimeString()}`);
-  } catch (err) {
-    showError(err.message);
-    setStatus("Error");
-  } finally {
-    if (btn) btn.disabled = false;
-  }
-}
-
-function buildSignalRequest(ticker, period, imageUrl, file) {
-  if (file) {
-    const fd = new FormData();
-    fd.append("ticker", ticker);
-    fd.append("period", period);
-    fd.append("file", file, file.name);
-    return apiPost("/api/signal", fd);
-  }
-  const q = `?ticker=${encodeURIComponent(ticker)}&period=${encodeURIComponent(period)}`;
-  const signalQuery = imageUrl ? `${q}&image_url=${encodeURIComponent(imageUrl)}` : q;
-  return apiGet(`/api/signal${signalQuery}`);
-}
-
-function showImagePreview(source) {
-  const viewer = byId("imageViewer");
-  if (!viewer) return;
-  if (!source) {
-    viewer.innerHTML = `<p style="color: var(--muted);">Sin imagen. Adjunta una noticia (URL o archivo) y ejecuta "Analizar".</p>`;
-    return;
-  }
-  const img = document.createElement("img");
-  if (source instanceof File) {
-    img.src = URL.createObjectURL(source);
-  } else {
-    img.src = source.url;
-  }
-  img.alt = "Imagen de noticia financiera";
-  viewer.innerHTML = "";
-  viewer.appendChild(img);
-}
-
-function renderCharts(data) {
-  const s = data.series;
-  updateChart("price", s.dates, [s.close, s.sma20, s.sma50]);
+  const lower = s.close.map((_, i) => (s.atr14[i] != null && s.close[i] != null ? s.close[i] - s.atr14[i] : null));
+  const upper = s.close.map((_, i) => (s.atr14[i] != null && s.close[i] != null ? s.close[i] + s.atr14[i] : null));
+  updateChart("price", s.dates, [s.close, s.sma20, s.sma50, lower, upper]);
   updateChart("rsi", s.dates, [s.rsi14, s.rsi14.map(() => 70), s.rsi14.map(() => 30)]);
   updateChart("macd", s.dates, [s.macd_hist, s.macd_signal]);
+  updateChart("volume", s.dates, [s.volume]);
+
+  const hist = returnsHistogram(s.close);
+  updateChart("returns", hist.labels, [hist.counts]);
+
   renderCandlestick(s.dates, s.open, s.high, s.low, s.close);
+
+  renderAdvice("advicePrecio", ind.asesoria?.precio);
+  renderAdvice("advicePrecioCandle", ind.asesoria?.precio);
+  renderAdvice("adviceRsi", ind.asesoria?.rsi);
+  renderAdvice("adviceMacd", ind.asesoria?.macd);
 }
 
-function renderArima(forecast, ticker) {
-  const box = byId("arimaBox");
+function renderMarketBoard(screenerData) {
+  const box = byId("marketBoard");
   if (!box) return;
-  if (!forecast || !forecast.forecast) {
-    box.innerHTML = '<p style="color: var(--muted);">Pronóstico ARIMA no disponible.</p>';
+  const list = screenerData?.companies || [];
+  if (!list.length) {
+    box.innerHTML = '<p style="color: var(--muted);">Tablero no disponible.</p>';
     return;
   }
-  const dates = (forecast.forecast_dates || []).join(" · ");
-  const chips = forecast.forecast
-    .map((v, i) => `<div class="forecast-chip"><b>${fmt(v, 4)}</b>Día ${i + 1}</div>`)
+  box.innerHTML = list
+    .map((c) => {
+      const err = c.error ? '<div class="m-err">error</div>' : "";
+      const upCls = (c.change_pct || 0) >= 0 ? "up" : "down";
+      const sigCls = c.senal ? `sig-${c.senal.toLowerCase()}` : "";
+      return `
+      <div class="m-cell ${sigCls}" title="${esc(c.nombre)}">
+        <div class="m-ticker">${esc(c.ticker)}</div>
+        <div class="m-price ${upCls}">${fmt(c.close)}</div>
+        <div class="m-sub">${pct(c.change_pct)}</div>
+        <div class="m-sub">RSI ${fmt(c.rsi14, 1)}${c.senal ? ` · ${sigLabel(c.senal)}` : ""}</div>
+        ${err}
+      </div>`;
+    })
     .join("");
-  box.innerHTML = `
-    <p><b>${esc(ticker)}</b> · Proyección del próximo cierre: <b style="color: var(--accent);">${fmt(forecast.next_close, 4)}</b></p>
-    <div class="forecast-list">${chips}</div>
-    <p style="color: var(--muted); margin-top: 8px;">Días de mercado proyectados: ${dates}</p>`;
 }
 
-function renderIA(data, imageSource) {
+function returnsHistogram(closes) {
+  const rets = [];
+  for (let i = 1; i < closes.length; i++) {
+    const a = closes[i - 1], b = closes[i];
+    if (a == null || b == null || !a) continue;
+    const r = ((b / a) - 1) * 100;
+    if (Number.isFinite(r) && Math.abs(r) < 15) rets.push(r);
+  }
+  if (!rets.length) return { labels: [], counts: [] };
+  const min = Math.floor(Math.min(...rets));
+  const max = Math.ceil(Math.max(...rets));
+  if (max - min > 18) return { labels: [], counts: [] };
+  const buckets = {};
+  for (let b = min; b < max; b++) buckets[b] = 0;
+  rets.forEach((r) => {
+    const b = Math.floor(r);
+    if (buckets[b] != null) buckets[b]++;
+  });
+  const labels = Object.keys(buckets).map(Number).sort((a, b) => a - b);
+  return { labels: labels.map((b) => `${b}%`), counts: labels.map((b) => buckets[b]) };
+}
+
+/* ================= VISTA 2 · PREDICTIVA ================= */
+
+function renderPredictiva(fore, sig, newsData) {
+  const f = fore?.forecast || {};
+  const ia = sig?.analisis_ia || {};
+  const ctx = sig?.contexto_tecnico || {};
+  const sentTone = sig?.senal?.sentimiento_noticias || "NEUTRAL";
+  const expected = (f.next_close != null && f.last_close) ? ((f.next_close / f.last_close) - 1) * 100 : null;
+
+  const kpi = byId("kpisPred");
+  kpi.innerHTML =
+    kpiCard("Pronóstico 5 días", fmt(f.next_close, 4), "", expected >= 0 ? "up" : "down") +
+    kpiCard("Variación esperada", pct(expected), "modelo ARIMA") +
+    kpiCard("Dirección IA", prediccionLabel(ia.prediccion), `${fmt((ia.probabilidad || 0) * 100, 0)}% confianza`, sigClass("pred", ia.prediccion === "ALCISTA" ? "buy" : ia.prediccion === "BAJISTA" ? "sell" : "hold")) +
+    kpiCard("Probabilidad IA", fmt((ia.probabilidad || 0) * 100, 0) + " %") +
+    kpiCard("Nivel de riesgo", ia.nivel_riesgo || "--") +
+    kpiCard("Sentimiento noticias", sentimientoTone(sentTone));
+
+  renderForecast(fore, ctx.atr14);
+  renderIA(sig);
+  renderNews(newsData);
+}
+
+function sigClass(prefix, key) {
+  return `sig-${key}`;
+}
+
+function sentimientoTone(tone) {
+  const map = {
+    POSITIVO: ["Positivo", up],
+    LIGERAMENTE_POSITIVO: ["Levemente positivo", up],
+    NEUTRAL: ["Neutral", "#8b949e"],
+    LIGERAMENTE_NEGATIVO: ["Levemente negativo", down],
+    NEGATIVO: ["Negativo", down],
+  };
+  const [label, color] = map[tone] || ["--", "#8b949e"];
+  return `<span style="color:${color};">${esc(label)}</span>`;
+}
+
+function renderForecast(fore, atr) {
+  const f = fore?.forecast || {};
+  const box = byId("forecastChips");
+  if (box) {
+    if (f.forecast && f.forecast.length) {
+      const chip = (v, i) => `<div class="forecast-chip"><b>${fmt(v, 4)}</b>Día ${i + 1}</div>`;
+      box.innerHTML = f.forecast.map((v, i) => chip(v, i)).join("");
+    } else {
+      box.innerHTML = '<p style="color: var(--muted);">Pronóstico ARIMA no disponible.</p>';
+    }
+  }
+
+  const chart = charts["chartForecast"];
+  if (chart && f.forecast_dates && f.forecast) {
+    const histDates = (state.lastSeries?.dates || []).slice(-10);
+    const histClose = (state.lastSeries?.close || []).slice(-10);
+    const labels = histDates.concat(f.forecast_dates.slice(0, f.forecast.length));
+    const hist = histClose.map((v) => (v == null ? null : v));
+    const fut = [].concat(hist.map(() => null), f.forecast);
+    const atrV = atr || (state.lastAtr ?? 1);
+    const lower = fut.map((v) => (v == null ? null : v - atrV));
+    const upper = fut.map((v) => (v == null ? null : v + atrV));
+    updateChart("forecast", labels, [lower, upper, fut, hist]);
+  }
+
+  renderAdvice("adviceArima", fore?.forecast?.asesoria);
+}
+
+function renderIA(sig) {
   const box = byId("iaBox");
   if (!box) return;
-  const ia = data.analisis_ia;
-  const signalClass = data.senal.direccion === "BUY" ? "sig-buy" : data.senal.direccion === "SELL" ? "sig-sell" : "sig-hold";
-  const label = ia.con_imagen ? "con imagen de noticia" : "solo con datos de mercado";
+  const ia = sig?.analisis_ia || {};
+  const cls = ia.prediccion === "ALCISTA" ? "sig-buy" : ia.prediccion === "BAJISTA" ? "sig-sell" : "sig-hold";
+  const fuente = ia.fuente === "gemini"
+    ? '<span class="badge-gemini">Gemini</span>'
+    : '<span class="badge-rules">Reglas cuantitativas (sin clave de API)</span>';
   box.innerHTML = `
-    <div style="display:flex; flex-wrap:wrap; gap:16px; align-items:center; margin-bottom:10px;">
-      <h3 class="${signalClass}" style="font-size: 20px;">${esc(prediccionLabel(ia.prediccion))}</h3>
-      <span class="${signalClass}"><b>${fmt(ia.probabilidad)}</b> probabilidad</span>
+    <div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin-bottom:12px;">
+      <h3 class="${cls}" style="font-size:20px; margin:0;">${esc(prediccionLabel(ia.prediccion))}</h3>
+      <span class="${cls}"><b>${fmt((ia.probabilidad || 0) * 100, 0)}%</b> de probabilidad</span>
       <span>Riesgo: <b>${esc(ia.nivel_riesgo)}</b></span>
-      <span style="color: var(--muted); font-size: 12px;">Fuente: ${esc(ia.fuente)} · ${label}</span>
+      ${fuente}
     </div>
-    <h3>Resumen de la noticia</h3>
-    <p class="ai-summary">${esc(ia.resumen_noticia)}</p>
-    <h3 style="margin-top: 12px;">Explicación de la decisión</h3>
-    <p class="ai-summary">${esc(ia.justificacion_tecnica)}</p>
-    ${(data.senal.razones || []).map((r) => `<div class="reason">${esc(r)}</div>`).join("")}`;
+    <h3>Conclusión cualitativa</h3>
+    <p class="ai-summary">${esc(ia.conclusion_cualitativa || "")}</p>
+    <h3 style="margin-top:12px;">Justificación técnica</h3>
+    <p class="ai-summary">${esc(ia.justificacion_tecnica || "")}</p>`;
+}
+
+function renderNews(newsData) {
+  const agg = byId("newsAgg");
+  const list = byId("newsList");
+  const items = newsData?.noticias || [];
+  const counts = { POS: 0, NEU: 0, NEG: 0 };
+  items.forEach((n) => { if (counts[n.sentimiento] != null) counts[n.sentimiento]++; });
+  const total = items.length;
+  const bar = (label, value, color) => `
+    <div class="news-bar-row"><span>${label}</span>
+      <div class="news-track"><div class="news-fill" style="width:${total ? (value / total) * 100 : 0}%; background:${color};"></div></div>
+      <b>${value}</b></div>`;
+  agg.innerHTML = total
+    ? `<div class="metrics" style="grid-template-columns:repeat(3, minmax(90px,1fr));">
+        ${bar("Positivas", counts.POS, up)}
+        ${bar("Neutrales", counts.NEU, "#8b949e")}
+        ${bar("Negativas", counts.NEG, down)}
+       </div>`
+    : '<p style="color: var(--muted);">Sin noticias aún. El ETL de GitHub Actions (cron 22:00 UTC) las cargará diariamente.</p>';
+
+  list.innerHTML = items.length
+    ? items.map((n) => {
+        const cls = n.sentimiento === "POS" ? "n-pos" : n.sentimiento === "NEG" ? "n-neg" : "n-neu";
+        return `
+        <div class="news-item">
+          <span class="news-badge ${cls}">${esc(sentimientoLabel(n.sentimiento))}</span>
+          <div class="news-body">
+            <a href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.titulo)}</a>
+            <div class="news-meta">${esc(n.publisher || "")} · ${esc((n.fecha || "").slice(0, 10))} · ${Math.round((n.prob_pos || 0) * 100)}%+ / ${Math.round((n.prob_neu || 0) * 100)}%0 / ${Math.round((n.prob_neg || 0) * 100)}%-</div>
+          </div>
+        </div>`;
+      }).join("")
+    : "";
+}
+
+function renderCompare(forecasts, currentTicker) {
+  const box = byId("compareBox");
+  if (!box) return;
+  const rows = forecasts
+    .map((r) => {
+      const f = r?.forecast || {};
+      const exp = (f.next_close != null && f.last_close) ? ((f.next_close / f.last_close) - 1) * 100 : null;
+      const cls = exp >= 0 ? "up" : exp < 0 ? "down" : "";
+      return `
+      <tr>
+        <td><b>${esc(r.ticker)}</b>${r.ticker === currentTicker ? ' <span class="badge-rules">actual</span>' : ""}</td>
+        <td>${fmt(f.last_close)}</td>
+        <td>${fmt(f.next_close, 4)}</td>
+        <td class="${cls}">${pct(exp)}</td>
+        <td>${esc(f.method || "--")}</td>
+        <td>${f.aic != null ? fmt(f.aic, 1) : "--"}</td>
+      </tr>`;
+    })
+    .join("");
+  box.innerHTML = `<table>
+    <thead><tr><th>Empresa</th><th>Cierre</th><th>Pronóstico 5d</th><th>Var. esperada</th><th>Modelo</th><th>AIC</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+
+/* ================= VISTA 3 · PRESCRIPTIVA ================= */
+
+function renderPrescriptiva(sig, bt, ind, fore) {
+  const senal = sig?.senal || {};
+  const ia = sig?.analisis_ia || {};
+  const ctx = sig?.contexto_tecnico || {};
+  const dirCls = `sig-${senal.direccion?.toLowerCase()}`;
+
+  const kpi = byId("kpisPres");
+  kpi.innerHTML =
+    kpiCard("Señal", sigLabel(senal.direccion), `${pct(ctx.change_pct)} hoy`, dirCls) +
+    kpiCard("Recomendación IA", esc(senal.recomendacion_ia), (ia.probabilidad || 0) * 100 + "% confianza", dirCls) +
+    kpiCard("Stop Loss", fmt(senal.stop_loss), "cierre - 1.5·ATR") +
+    kpiCard("Take Profit", fmt(senal.take_profit), "cierre + 3·ATR") +
+    kpiCard("Ratio R/B", fmt(senal.ratio_riesgo_beneficio), "1 : 2") +
+    kpiCard("Riesgo", esc(senal.nivel_riesgo || "--"));
+
+  const hero = byId("signalHero");
+  hero.innerHTML = `
+    <div class="hero-left">
+      <div class="hero-signal ${dirCls}">${sigLabel(senal.direccion)}</div>
+      <div class="hero-sub">${esc(sig.nombre || sig.ticker)} · ${esc(senal.direccion)}</div>
+    </div>
+    <div class="hero-levels">
+      <div class="kpi"><div class="label">Stop Loss</div><div class="value down">${fmt(senal.stop_loss)}</div></div>
+      <div class="kpi"><div class="label">Entrada</div><div class="value" style="color:var(--text);">${fmt(ctx.close)}</div></div>
+      <div class="kpi"><div class="label">Take Profit</div><div class="value up">${fmt(senal.take_profit)}</div></div>
+    </div>`;
+
+  renderRecommend(senal, ia);
+  renderChecklist(ctx, ia, fore, senal);
+  renderMatrix(senal, ia);
+  bindPosition(senal, ctx);
+
+  renderNarracion(sig);
+  renderBacktest(bt);
+}
+
+function renderRecommend(senal, ia) {
+  const box = byId("recommendBox");
+  if (!box) return;
+  const razones = (senal.razones || []).map((r) => `<div class="reason">✓ ${esc(r)}</div>`).join("");
+  const advertencias = (senal.advertencias || []).map((a) => `<div class="reason warn-text">⚠ ${esc(a)}</div>`).join("");
+  box.innerHTML = `
+    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:10px;">
+      <span class="rec-pill rec-${(ia.recomendacion || "MANTENER").toLowerCase()}">${esc(ia.recomendacion || "MANTENER")}</span>
+      <span>Dirección: <b>${esc(prediccionLabel(ia.prediccion))}</b></span>
+      <span>Probabilidad: <b>${fmt((ia.probabilidad || 0) * 100, 0)}%</b></span>
+      <span>Riesgo: <b>${esc(ia.nivel_riesgo)}</b></span>
+    </div>
+    <p class="narracion-text">${esc(ia.conclusion_cualitativa || "")}</p>
+    ${razones}
+    ${advertencias}
+    ${ia.justificacion_tecnica ? `<p class="ai-summary" style="color: var(--muted);">${esc(ia.justificacion_tecnica)}</p>` : ""}`;
+}
+
+function renderChecklist(ctx, ia, fore, senal) {
+  const box = byId("checklistBox");
+  if (!box) return;
+  const items = [];
+  items.push({
+    label: "Precio sobre SMA50 (tendencia de mediano plazo)",
+    ok: ctx.close != null && ctx.sma50 != null && ctx.close > ctx.sma50,
+    detalle: ctx.sma50 != null ? `cierre ${fmt(ctx.close)} vs SMA50 ${fmt(ctx.sma50)}` : "SMA50 no disponible",
+  });
+  items.push({
+    label: "RSI sin sobrecompra (<70)",
+    ok: ctx.rsi14 != null && ctx.rsi14 < 70,
+    detalle: ctx.rsi14 != null ? `RSI ${fmt(ctx.rsi14, 1)}` : "RSI no disponible",
+  });
+  items.push({
+    label: "Probabilidad de la IA ≥ 65%",
+    ok: (ia.probabilidad || 0) >= 0.65,
+    detalle: `${fmt((ia.probabilidad || 0) * 100, 0)}%`,
+  });
+  const exp = fore?.forecast?.next_close != null && fore?.forecast?.last_close
+    ? ((fore.forecast.next_close / fore.forecast.last_close) - 1) * 100 : null;
+  items.push({
+    label: "ARIMA proyecta dirección (var ≥ ±0.5%)",
+    ok: exp != null && Math.abs(exp) >= 0.5,
+    detalle: exp != null ? pct(exp) : "sin proyección",
+  });
+  const tone = senal.sentimiento_noticias;
+  items.push({
+    label: "Noticias sin sesgo claramente negativo",
+    ok: tone != null && !["NEGATIVO", "LIGERAMENTE_NEGATIVO"].includes(tone),
+    detalle: tone || "sin datos",
+  });
+  box.innerHTML = items.map((it) => `
+    <div class="check-row ${it.ok ? "check-ok" : "check-no"}">
+      <span class="check-mark">${it.ok ? "✓" : "✗"}</span>
+      <span class="check-label">${esc(it.label)}</span>
+      <span class="check-det">${esc(it.detalle)}</span>
+    </div>`).join("");
+}
+
+function renderMatrix(senal, ia) {
+  const box = byId("matrixBox");
+  if (!box) return;
+  const rows = ["BUY", "HOLD", "SELL"];
+  const cols = ["AUMENTAR", "MANTENER", "RETIRAR"];
+  const cell = (s, r) => {
+    let cls = "mz-neu";
+    if (s === "BUY" && r === "AUMENTAR") cls = "mz-buy";
+    else if (s === "BUY" && r === "RETIRAR") cls = "mz-conflict";
+    else if (s === "SELL" && r === "RETIRAR") cls = "mz-sell";
+    else if (s === "SELL" && r === "AUMENTAR") cls = "mz-conflict";
+    else if (r === "AUMENTAR") cls = "mz-mild-up";
+    else if (r === "RETIRAR") cls = "mz-mild-down";
+    else cls = "mz-neu";
+    return `<td class="${cls}">${cellLabel(s, r)}</td>`;
+  };
+  const cellLabel = (s, r) => {
+    if (s === "BUY" && r === "AUMENTAR") return "Comprar fuerte";
+    if (s === "SELL" && r === "RETIRAR") return "Salir / vender";
+    if ((s === "BUY" && r === "RETIRAR") || (s === "SELL" && r === "AUMENTAR")) return "Conflicto";
+    if (s === "HOLD") return "Esperar confirmación";
+    if (r === "MANTENER") return "Mantener bajo control";
+    return "Cautela";
+  };
+  const highlight = (s, r) => (senal.direccion === s && ia.recomendacion === r) ? " mz-current" : "";
+  box.innerHTML = `
+    <table class="matrix">
+      <thead><tr><th>Señal \\ IA</th>${cols.map((c) => `<th>${esc(c)}</th>`).join("")}</tr></thead>
+      <tbody>
+        ${rows.map((s) => `<tr><td><b>${esc(sigLabel(s))}</b></td>${cols.map((r) => `<td class="${cellCls(s, r)}${highlight(s, r)}">${cellLabel(s, r)}</td>`).join("")}</tr>`).join("")}
+      </tbody>
+    </table>
+    <p class="hint">La celda resaltada es la combinación actual: <b>${esc(sigLabel(senal.direccion))} × ${esc(ia.recomendacion)}</b>.</p>`;
+}
+
+function cellCls(s, r) {
+  if (s === "BUY" && r === "AUMENTAR") return "mz-buy";
+  if (s === "SELL" && r === "RETIRAR") return "mz-sell";
+  if ((s === "BUY" && r === "RETIRAR") || (s === "SELL" && r === "AUMENTAR")) return "mz-conflict";
+  if (r === "AUMENTAR") return "mz-mild-up";
+  if (r === "RETIRAR") return "mz-mild-down";
+  return "mz-neu";
+}
+
+function bindPosition(senal, ctx) {
+  const box = byId("positionBox");
+  if (!box) return;
+  const input = byId("capitalInput");
+  const render = () => {
+    const capital = Number(input?.value || 10000);
+    const close = ctx.close;
+    const sl = senal.stop_loss;
+    const riskPct = 1.0;
+    if (close == null || sl == null || sl >= close) {
+      if (close == null || sl == null) {
+        box.innerHTML = '<p style="color: var(--muted);">Sin niveles SL/cierre para dimensionar.</p>';
+        return;
+      }
+      box.innerHTML = '<p style="color: var(--muted);">El Stop Loss es mayor que el precio (señal de venta): no se dimensiona compra.</p>';
+      return;
+    }
+    const riskAmount = (capital * riskPct) / 100;
+    const distance = close - sl;
+    const units = Math.floor(riskAmount / distance);
+    const needed = units * close;
+    box.innerHTML = `
+      <div class="metrics">
+        <div class="kpi"><div class="label">Capital</div><div class="value">S/ ${fmt(capital, 0)}</div></div>
+        <div class="kpi"><div class="label">Riesgo a asumir</div><div class="value down">S/ ${fmt(riskAmount, 2)}</div></div>
+        <div class="kpi"><div class="label">Distancia al SL</div><div class="value">${fmt(distance)}</div></div>
+        <div class="kpi"><div class="label">Unidades</div><div class="value">${fmt(units, 0)}</div></div>
+        <div class="kpi"><div class="label">Monto (S/ ${fmt(close)})</div><div class="value">S/ ${fmt(needed, 0)}</div></div>
+      </div>
+      <p class="hint">Solo compra: se arriesga el <b>1% del capital</b> en la distancia al Stop Loss. No es recomendación de compra.</p>`;
+  };
+  render();
+  if (!input.dataset.bound) {
+    input.addEventListener("input", render);
+    input.dataset.bound = "1";
+  }
 }
 
 function renderNarracion(data) {
   const box = byId("narracionBox");
   if (!box) return;
-  const narracion = data.narracion;
+  const narracion = data?.narracion;
   if (!narracion || !narracion.parrafo) {
     box.innerHTML = '<p style="color: var(--muted);">Interpretación no disponible.</p>';
     return;
@@ -623,28 +910,10 @@ function renderNarracion(data) {
     : '<span class="badge-rules">Generada por reglas</span>';
   box.innerHTML = `
     <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
-      <h3 style="margin:0;">${esc(data.nombre || data.ticker)}</h3> ${etiqueta}
+      <h3 style="margin:0;">${esc(data?.nombre || data?.ticker)}</h3> ${etiqueta}
     </div>
     <p class="narracion-text">${esc(narracion.parrafo)}</p>
     ${bullets ? `<ul class="narracion-bullets">${bullets}</ul>` : ""}`;
-}
-
-function renderFuente(meta, nombre, ticker) {
-  const box = byId("fuenteBox");
-  if (!box) return;
-  if (!meta) {
-    box.innerHTML = '<p style="color: var(--muted);">Metadatos de la fuente no disponibles.</p>';
-    return;
-  }
-  const card = (label, value) =>
-    `<div class="kpi"><div class="label">${esc(label)}</div><div class="value" style="font-size:18px;">${esc(value)}</div></div>`;
-  box.innerHTML =
-    card("Proveedor", meta.proveedor) +
-    card("Formato", meta.tipo) +
-    card("Periodo", meta.period_solicitado) +
-    card("Registros diarios", meta.n_velas) +
-    card("Última fecha", meta.ultima_fecha || "--") +
-    card("Empresa", `${nombre || ticker}`);
 }
 
 function renderBacktest(bt) {
@@ -674,7 +943,7 @@ function renderBacktest(bt) {
     updateChart("backtest", [], [[], []]);
   }
 
-  renderAdvice("adviceBacktest", bt.asesoria || null);
+  renderAdvice("adviceBacktest", bt?.asesoria || null);
 
   if (!bt.trades || !bt.trades.length) {
     trades.innerHTML = '<p style="color: var(--muted); padding: 8px;">Sin operaciones en la ventana de prueba.</p>';
@@ -692,6 +961,53 @@ function renderBacktest(bt) {
   trades.innerHTML = `<table>
     <thead><tr><th>Entrada</th><th>Salida</th><th>Resultado</th><th>Motivo de salida</th><th>Días</th></tr></thead>
     <tbody>${rows}</tbody></table>`;
+}
+
+/* ---------------- Análisis principal ---------------- */
+
+async function run() {
+  const ticker = byId("ticker")?.value.trim().toUpperCase() || "SPY";
+  const period = byId("period")?.value || "6mo";
+  const btn = byId("runBtn");
+  const t = encodeURIComponent(ticker);
+  const p = encodeURIComponent(period);
+
+  if (btn) btn.disabled = true;
+  setStatus("Recopilando datos y calculando señales...");
+  hideError();
+
+  try {
+    const [ind, screenerData, sig, fore, newsData, bt] = await Promise.all([
+      apiGet(`/api/indicators?ticker=${t}&period=${p}`),
+      apiGet(`/api/screener?tickers=${SCREENER.map((c) => c.t).join(",")}&period=${p}`),
+      apiGet(`/api/signal?ticker=${t}&period=${p}`),
+      apiGet(`/api/forecast?ticker=${t}&period=${p}`),
+      apiGet(`/api/news?ticker=${t}`),
+      apiGet(`/api/backtest?ticker=${t}`),
+    ]);
+
+    const compares = await Promise.all(
+      SCREENER.map((c) =>
+        c.t === ticker ? Promise.resolve(fore) : apiGet(`/api/forecast?ticker=${c.t}&period=6mo`)
+      )
+    );
+
+    state.lastSeries = ind.series;
+    state.lastAtr = ind.ultimo?.atr14;
+
+    renderDescriptiva(ind, screenerData);
+    renderPredictiva(fore, sig, newsData);
+    renderPrescriptiva(sig, bt, ind, fore);
+    renderCompare(compares, ticker);
+
+    document.querySelector("header h1 .light").textContent = `· ${sig.nombre || ticker}`;
+    setStatus(`Listo · ${ticker} · ${new Date().toLocaleTimeString()}`);
+  } catch (err) {
+    showError(err.message);
+    setStatus("Error");
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 /* ---------------- Estado / errores ---------------- */
@@ -714,7 +1030,7 @@ function hideError() {
   if (el) el.classList.add("hidden");
 }
 
-/* ---------------- Pestaña Metodología ---------------- */
+/* ---------------- Metodología (footer) ---------------- */
 
 const TDSP_PHASES = [
   {
@@ -724,18 +1040,18 @@ const TDSP_PHASES = [
   },
   {
     fase: "Fase 2 · Adquisición y comprensión de datos",
-    detalle: "Extracción de series OHLCV mediante yfinance y captura de imágenes de noticias financieras. Verificación de integridad, calidad y limpieza temporal.",
-    entregable: "Repositorio de tablas limpias e imágenes indexadas.",
+    detalle: "Extracción de series OHLCV y titulares de noticias mediante yfinance dentro del ETL en GitHub Actions. Verificación de integridad, calidad y limpieza temporal.",
+    entregable: "Tablas en Supabase: ohlcv, news, forecast_snapshots.",
   },
   {
     fase: "Fase 3 · Modelado",
-    detalle: "Ingeniería de características (SMA, RSI, MACD, ATR), calibración del benchmark ARIMA(p,d,q) y orquestación de peticiones multimodales a Gemini Flash.",
-    entregable: "Contratos JSON validados y pronósticos econométricos.",
+    detalle: "Ingeniería de características (SMA, RSI, MACD, ATR), calibración del benchmark ARIMA(p,d,q), entrenamiento del modelo de sentimiento (TF-IDF + Regresión Logística) y lectura cualitativa con Gemini Flash.",
+    entregable: "Modelo de sentimiento + pronósticos econométricos + contratos JSON validados.",
   },
   {
     fase: "Fase 4 · Despliegue",
-    detalle: "Motor de señales con Stop-Loss y Take-Profit, simulación histórica (backtesting) y construcción del panel interactivo que estás viendo.",
-    entregable: "Dashboard desplegado en Vercel (costo S/ 0.00).",
+    detalle: "Motor de señales con Stop-Loss y Take-Profit, simulación histórica (backtesting) y panel de 3 vistas (Descriptiva, Predictiva, Prescriptiva).",
+    entregable: "Dashboard desplegado en Vercel (costo S/ 0.00) con datos persistentes en Supabase.",
   },
   {
     fase: "Fase 5 · Aceptación del cliente",
@@ -745,29 +1061,31 @@ const TDSP_PHASES = [
 ];
 
 const PIPELINE_STEPS = [
-  { paso: "1", titulo: "Fuentes de datos", texto: "yfinance (OHLCV) e imágenes de noticias financieras públicas." },
-  { paso: "2", titulo: "Ingesta y ETL", texto: "Limpieza de series, cálculo de indicadores y normalización de imágenes (JPEG ≤ 1024 px)." },
-  { paso: "3", titulo: "Modelado dual", texto: "Indicadores técnicos + benchmark ARIMA (ADF/AIC) + inferencia multimodal Gemini Flash." },
-  { paso: "4", titulo: "Señal y Backtesting", texto: "BUY/HOLD/SELL con SL 1.5·ATR y TP 3·ATR; simulación 70/15/15 con fricción 0.1%." },
-  { paso: "5", titulo: "Panel interactivo", texto: "Dashboard web en Vercel con KPIs, gráficos, inferencia IA, backtesting y esta guía metodológica." },
+  { paso: "1", titulo: "Disparo", texto: "GitHub Actions: cron 22:00 UTC, manual o push a main." },
+  { paso: "2", titulo: "Entrenamiento ML", texto: "TF-IDF + Regresión Logística sobre 12 mil+ titulares financieros (sentimiento)." },
+  { paso: "3", titulo: "ETL", texto: "OHLCV + indicadores, ARIMA 5 días y noticias clasificadas → Supabase." },
+  { paso: "4", titulo: "API y decisión", texto: "Vercel lee Supabase; Gemini aporta lectura cualitativa; reglas emiten señal." },
+  { paso: "5", titulo: "Panel 3 vistas", texto: "Descriptiva, Predictiva y Prescriptiva con Chart.js." },
 ];
 
 const CHAIN_VALUES = ["Dato crudo", "Información", "Modelado dual", "Señal filtrada", "Decisión informada"];
 
 const V_LAYOUT = [
-  { letra: "Volumen", texto: "Millones de puntos OHLCV históricos + repositorio de imágenes de prensa (megas a gigas)." },
-  { letra: "Velocidad", texto: "Procesamiento por lotes al cierre del mercado y cortes de 4 h, acorde al ciclo del Swing Trading." },
-  { letra: "Variedad", texto: "Tablas numéricas continuas (OHLCV) conviven con objetos binarios visuales (imágenes)." },
+  { letra: "Volumen", texto: "Series OHLCV históricas, titulares de noticias y snapshots de pronóstico (filas por día por ticker)." },
+  { letra: "Velocidad", texto: "Procesamiento en lotes diario al cierre del mercado (cron en la nube), acorde al ciclo del Swing Trading." },
+  { letra: "Variedad", texto: "Datos numéricos continuos (OHLCV), texto de noticias y salidas estructuradas JSON del modelo y de la IA." },
 ];
 
 const TOOLS = [
-  ["yfinance / Kaggle", "Cotizaciones OHLCV"],
+  ["yfinance", "Cotizaciones OHLCV + titulares"],
   ["Python · Pandas · NumPy", "Limpieza e indicadores"],
-  ["statsmodels ARIMA", "Benchmark econométrico"],
-  ["Gemini Flash API", "Motor multimodal"],
-  ["Pillow", "Normalización de imágenes"],
-  ["Parquet/JSON + Vercel", "Almacenamiento y hosting"],
-  ["Chart.js + HTML/JS", "Panel interactivo"],
+  ["statsmodels ARIMA", "Pronóstico econométrico"],
+  ["scikit-learn", "Sentimiento de noticias (ML clásico)"],
+  ["Gemini Flash API", "Análisis cualitativo"],
+  ["Supabase Postgres", "Almacenamiento en la nube"],
+  ["GitHub Actions", "ETL y entrenamiento programados"],
+  ["Vercel", "Hosting serverless + CDN"],
+  ["Chart.js + HTML/JS", "Panel interactivo 3 vistas"],
 ];
 
 const ETHIC_TEXT =
@@ -822,34 +1140,28 @@ function renderMetodologia() {
 
   const chain = byId("chainFlow");
   if (chain) {
-    chain.innerHTML = CHAIN_VALUES.map(
-      (c) => `<div class="chain-node">${esc(c)}</div>`
-    ).join('<div class="chain-arrow">→</div>');
+    chain.innerHTML = CHAIN_VALUES.map((c) => `<div class="chain-node">${esc(c)}</div>`).join('<div class="chain-arrow">→</div>');
   }
 
   const vs = byId("vsBox");
   if (vs) {
-    vs.innerHTML = V_LAYOUT.map(
-      (v) => `
+    vs.innerHTML = V_LAYOUT.map((v) => `
       <div class="vs-card">
         <div class="vs-letter">${esc(v.letra[0])}</div>
         <div><b>${esc(v.letra)}</b><p class="hint">${esc(v.texto)}</p></div>
-      </div>`
-    ).join("");
+      </div>`).join("");
   }
 
   const tools = byId("toolsBox");
   if (tools) {
-    tools.innerHTML = TOOLS.map(
-      ([h, d]) => `<div class="tool-item"><b>${esc(h)}</b><span class="hint">${esc(d)}</span></div>`
-    ).join("");
+    tools.innerHTML = TOOLS.map(([h, d]) => `<div class="tool-item"><b>${esc(h)}</b><span class="hint">${esc(d)}</span></div>`).join("");
   }
 
   const ethic = byId("ethicBox");
   if (ethic) ethic.textContent = ETHIC_TEXT;
 }
 
-/* ---------------- Pestaña Diccionario ---------------- */
+/* ---------------- Diccionario (footer) ---------------- */
 
 const GLOSSARY = [
   {
@@ -876,9 +1188,10 @@ const GLOSSARY = [
   {
     grupo: "Señales y decisiones",
     items: [
-      ["Señal BUY (Compra)", "El sistema sugiere comprar: predicción alcista con alta probabilidad, precio sobre su media y RSI en zona razonable."],
+      ["Señal BUY (Compra)", "El sistema sugiere comprar: la IA recomienda AUMENTAR y la confluencia técnica acompaña."],
       ["Señal HOLD (Mantener)", "Sin confirmación suficiente: se espera antes de abrir o cerrar una posición."],
-      ["Señal SELL (Venta)", "El sistema sugiere salir o vender: predicción bajista con alta probabilidad."],
+      ["Señal SELL (Venta)", "El sistema sugiere salir o vender: la IA recomienda RETIRAR la posición."],
+      ["Recomendación AUMENTAR / RETIRAR / MANTENER", "Lectura cualitativa de la IA para ajustar la exposición, no solo abrir o cerrar."],
       ["Stop Loss", "Precio límite de protección. Si el precio cae hasta ahí, la operación se cierra para limitar la pérdida (aquí: cierre - 1.5 × ATR)."],
       ["Take Profit", "Precio objetivo donde se toma la ganancia (aquí: cierre + 3 × ATR)."],
       ["Ratio 1 : 2", "Por cada unidad que arriesgas, esperas ganar el doble. Típico del Swing Trading bien gestionado."],
@@ -899,23 +1212,17 @@ const GLOSSARY = [
 function renderGlossary() {
   const box = byId("glossaryBox");
   if (!box) return;
-  box.innerHTML = GLOSSARY.map(
-    (g) => `
+  box.innerHTML = GLOSSARY.map((g) => `
       <div class="glossary-group">
         <h3>${esc(g.grupo)}</h3>
         <div class="glossary-grid">
-          ${g.items
-            .map(
-              ([term, def]) => `
+          ${g.items.map(([term, def]) => `
               <details class="glossary-item">
                 <summary>${esc(term)}</summary>
                 <p>${esc(def)}</p>
-              </details>`
-            )
-            .join("")}
+              </details>`).join("")}
         </div>
-      </div>`
-  ).join("");
+      </div>`).join("");
 }
 
 /* ---------------- Inicialización ---------------- */
