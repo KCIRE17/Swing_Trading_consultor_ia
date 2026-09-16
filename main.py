@@ -58,12 +58,23 @@ def indicators(ticker: str = Query(..., min_length=1), period: str = "6mo"):
             "series": series_payload(frame),
             "meta": _data_meta(ticker, period, frame),
             "asesoria": {
-                "precio": advisor.advise_precio(
+                "precio": advisor.describe_precio(
                     ultimo.get("close"), ultimo.get("sma20"), ultimo.get("sma50"), ultimo.get("change_pct")
                 ),
-                "rsi": advisor.advise_rsi(ultimo.get("rsi14")),
-                "macd": advisor.advise_macd(
+                "rsi": advisor.describe_rsi(ultimo.get("rsi14")),
+                "macd": advisor.describe_macd(
                     ultimo.get("macd"), ultimo.get("macd_signal"), ultimo.get("macd_hist")
+                ),
+                "decision": advisor.resumen_descriptiva(
+                    ultimo.get("close"),
+                    ultimo.get("sma20"),
+                    ultimo.get("sma50"),
+                    ultimo.get("rsi14"),
+                    ultimo.get("macd"),
+                    ultimo.get("macd_signal"),
+                    ultimo.get("macd_hist"),
+                    ultimo.get("atr14"),
+                    ultimo.get("change_pct"),
                 ),
             },
         }
@@ -144,6 +155,15 @@ def _build_signal_response(ticker, period):
         enriched = gemini_client.enrich_narrative(narracion["parrafo"], context)
         if enriched:
             narracion = {"parrafo": enriched, "bullets": narracion["bullets"], "fuente": "gemini"}
+        noticias = context.get("noticias") or {}
+        decision_predictiva = advisor.resumen_predictiva(
+            context.get("arima_next"),
+            context.get("close"),
+            gemini.get("prediccion"),
+            gemini.get("probabilidad"),
+            gemini.get("nivel_riesgo"),
+            noticias,
+        )
         return {
             "ticker": company["ticker"],
             "nombre": company["name"],
@@ -151,6 +171,7 @@ def _build_signal_response(ticker, period):
             "analisis_ia": gemini,
             "senal": decision,
             "narracion": narracion,
+            "decision_predictiva": decision_predictiva,
         }
     except HTTPException:
         raise

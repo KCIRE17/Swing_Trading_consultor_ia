@@ -258,22 +258,54 @@ function kpiCard(label, value, sub = "", cls = "") {
 
 /* ---------------- Consejos por gráfico ---------------- */
 
-const adviceColor = { Apto: "ok", "Precaución": "warn", "No invertir": "danger" };
-
 function adviceHtml(advice) {
   if (!advice) return "";
-  const cls = adviceColor[advice.recomendacion] || "warn";
+  const nota = advice.nota || advice.advertencia;
   return `
-    <div class="advice-card ${cls}">
-      <div class="advice-top"><span class="advice-badge ${cls}">${esc(advice.recomendacion)}</span></div>
-      <p>${esc(advice.descripcion)}</p>
-      ${advice.advertencia ? `<p class="advice-warn-text"><b>Recomendación:</b> ${esc(advice.advertencia)}</p>` : ""}
+    <div class="advice-card">
+      <p>${esc(advice.descripcion || "")}</p>
+      ${nota ? `<p class="advice-warn-text"><b>Nota:</b> ${esc(nota)}</p>` : ""}
     </div>`;
 }
 
 function renderAdvice(id, advice) {
   const el = byId(id);
   if (el) el.innerHTML = adviceHtml(advice);
+}
+
+/* ---------------- Decisión única por vista ---------------- */
+
+const decisionClassMap = {
+  INVERTIR: "sig-buy",
+  MANTENER: "sig-hold",
+  RETIRAR: "sig-sell",
+  ALCISTA: "sig-buy",
+  NEUTRAL: "sig-hold",
+  BAJISTA: "sig-sell",
+};
+
+function renderDecision(id, decision) {
+  const el = byId(id);
+  if (!el) return;
+  if (!decision || !decision.recomendacion) {
+    el.innerHTML = "";
+    return;
+  }
+  const cls = decisionClassMap[decision.recomendacion] || "sig-hold";
+  const meta = [];
+  if (decision.direccion) meta.push(`Dirección: <b>${esc(prediccionLabel(decision.direccion))}</b>`);
+  if (decision.confianza != null) meta.push(`Confianza: <b>${fmt(decision.confianza, 0)}%</b>`);
+  if (decision.nivel_riesgo) meta.push(`Riesgo: <b>${esc(decision.nivel_riesgo)}</b>`);
+  el.innerHTML = `
+    <div class="decision-banner-inner d-${cls}">
+      <div class="decision-pill ${cls}">${esc(decision.recomendacion)}</div>
+      <div class="decision-body">
+        <div class="decision-title">${esc(decision.titulo || "Decisión de la vista")}</div>
+        <p>${esc(decision.descripcion || "")}</p>
+        ${meta.length ? `<div class="decision-meta">${meta.join(" · ")}</div>` : ""}
+        ${decision.nota ? `<p class="advice-warn-text"><b>Nota:</b> ${esc(decision.nota)}</p>` : ""}
+      </div>
+    </div>`;
 }
 
 /* ---------------- Etiquetas amigables ---------------- */
@@ -529,9 +561,9 @@ function renderDescriptiva(ind, screenerData) {
   renderCandlestick(s.dates, s.open, s.high, s.low, s.close);
 
   renderAdvice("advicePrecio", ind.asesoria?.precio);
-  renderAdvice("advicePrecioCandle", ind.asesoria?.precio);
   renderAdvice("adviceRsi", ind.asesoria?.rsi);
   renderAdvice("adviceMacd", ind.asesoria?.macd);
+  renderDecision("decisionDescr", ind.asesoria?.decision);
 }
 
 function renderMarketBoard(screenerData) {
@@ -603,6 +635,7 @@ function renderPredictiva(fore, sig, newsData) {
   renderForecast(fore, ctx.atr14);
   renderIA(sig);
   renderNews(newsData);
+  renderDecision("decisionPred", sig?.decision_predictiva);
 }
 
 function sigClass(prefix, key) {
@@ -653,17 +686,11 @@ function renderIA(sig) {
   const box = byId("iaBox");
   if (!box) return;
   const ia = sig?.analisis_ia || {};
-  const cls = ia.prediccion === "ALCISTA" ? "sig-buy" : ia.prediccion === "BAJISTA" ? "sig-sell" : "sig-hold";
   const fuente = ia.fuente === "gemini"
     ? '<span class="badge-gemini">Gemini</span>'
     : '<span class="badge-rules">Reglas cuantitativas (sin clave de API)</span>';
   box.innerHTML = `
-    <div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin-bottom:12px;">
-      <h3 class="${cls}" style="font-size:20px; margin:0;">${esc(prediccionLabel(ia.prediccion))}</h3>
-      <span class="${cls}"><b>${fmt((ia.probabilidad || 0) * 100, 0)}%</b> de probabilidad</span>
-      <span>Riesgo: <b>${esc(ia.nivel_riesgo)}</b></span>
-      ${fuente}
-    </div>
+    <div style="margin-bottom:12px;">${fuente}</div>
     <h3>Conclusión cualitativa</h3>
     <p class="ai-summary">${esc(ia.conclusion_cualitativa || "")}</p>
     <h3 style="margin-top:12px;">Justificación técnica</h3>
@@ -687,7 +714,7 @@ function renderNews(newsData) {
         ${bar("Neutrales", counts.NEU, "#8b949e")}
         ${bar("Negativas", counts.NEG, down)}
        </div>`
-    : '<p style="color: var(--muted);">Sin noticias aún. El ETL de GitHub Actions (cron 22:00 UTC) las cargará diariamente.</p>';
+    : '<p style="color: var(--muted);">Sin noticias aún. El ETL de GitHub Actions (cron 23:00 UTC / 6:00 p. m. hora Perú) las cargará diariamente.</p>';
 
   list.innerHTML = items.length
     ? items.map((n) => {
@@ -737,13 +764,13 @@ function renderPrescriptiva(sig, bt, ind, fore) {
   const dirCls = `sig-${senal.direccion?.toLowerCase()}`;
 
   const kpi = byId("kpisPres");
+  const wr = bt?.backtest?.win_rate;
   kpi.innerHTML =
-    kpiCard("Señal", sigLabel(senal.direccion), `${pct(ctx.change_pct)} hoy`, dirCls) +
     kpiCard("Recomendación IA", esc(senal.recomendacion_ia), (ia.probabilidad || 0) * 100 + "% confianza", dirCls) +
-    kpiCard("Stop Loss", fmt(senal.stop_loss), "cierre - 1.5·ATR") +
-    kpiCard("Take Profit", fmt(senal.take_profit), "cierre + 3·ATR") +
+    kpiCard("Probabilidad IA", fmt((ia.probabilidad || 0) * 100, 0) + " %") +
     kpiCard("Ratio R/B", fmt(senal.ratio_riesgo_beneficio), "1 : 2") +
-    kpiCard("Riesgo", esc(senal.nivel_riesgo || "--"));
+    kpiCard("Riesgo", esc(senal.nivel_riesgo || "--")) +
+    (wr != null ? kpiCard("Acierto histórico", fmt(wr * 100, 0) + " %", "win rate backtest") : "");
 
   const hero = byId("signalHero");
   hero.innerHTML = `
@@ -930,36 +957,37 @@ function renderBacktest(bt) {
   const metrics = byId("btMetrics");
   const trades = byId("btTrades");
   if (!metrics || !trades) return;
-  if (!bt || !bt.disponible) {
-    metrics.innerHTML = `<p style="color: var(--muted);">${esc(bt?.mensaje || "Backtest no disponible.")}</p>`;
+  const b = bt?.backtest || bt || {};
+  if (!b.disponible) {
+    metrics.innerHTML = `<p style="color: var(--muted);">${esc(b.mensaje || "Backtest no disponible.")}</p>`;
     trades.innerHTML = "";
     updateChart("backtest", [], [[], []]);
-    renderAdvice("adviceBacktest", bt?.asesoria || null);
+    renderAdvice("adviceBacktest", bt?.asesoria || b.asesoria || null);
     return;
   }
   const card = (label, value, cls = "") =>
     `<div class="kpi"><div class="label">${esc(label)}</div><div class="value ${cls}">${value}</div></div>`;
   metrics.innerHTML =
-    card("Acierto de la estrategia", `${(bt.win_rate * 100).toFixed(1)} %`) +
-    card("Operaciones simuladas", bt.n_trades) +
-    card("Ganancia de la estrategia", `${bt.total_return_pct} %`, bt.total_return_pct >= 0 ? "up" : "down") +
-    card("Mantenerse sin operar", `${bt.buy_hold_return_pct} %`, bt.buy_hold_return_pct >= 0 ? "up" : "down") +
-    card("Caída máxima", `${bt.max_drawdown_pct} %`, "down") +
-    card("Rendimiento por riesgo", fmt(bt.sharpe_ratio));
+    card("Acierto de la estrategia", `${(b.win_rate * 100).toFixed(1)} %`) +
+    card("Operaciones simuladas", b.n_trades) +
+    card("Ganancia de la estrategia", `${b.total_return_pct} %`, b.total_return_pct >= 0 ? "up" : "down") +
+    card("Mantenerse sin operar", `${b.buy_hold_return_pct} %`, b.buy_hold_return_pct >= 0 ? "up" : "down") +
+    card("Caída máxima", `${b.max_drawdown_pct} %`, "down") +
+    card("Rendimiento por riesgo", fmt(b.sharpe_ratio));
 
-  if (bt.curva && bt.curva.dates && bt.curva.dates.length) {
-    updateChart("backtest", bt.curva.dates, [bt.curva.estrategia, bt.curva.buy_hold]);
+  if (b.curva && b.curva.dates && b.curva.dates.length) {
+    updateChart("backtest", b.curva.dates, [b.curva.estrategia, b.curva.buy_hold]);
   } else {
     updateChart("backtest", [], [[], []]);
   }
 
-  renderAdvice("adviceBacktest", bt?.asesoria || null);
+  renderAdvice("adviceBacktest", bt?.asesoria || b.asesoria || null);
 
-  if (!bt.trades || !bt.trades.length) {
+  if (!b.trades || !b.trades.length) {
     trades.innerHTML = '<p style="color: var(--muted); padding: 8px;">Sin operaciones en la ventana de prueba.</p>';
     return;
   }
-  const rows = bt.trades
+  const rows = b.trades
     .map(
       (t) => `<tr>
         <td>${t.entrada}</td><td>${t.salida}</td>

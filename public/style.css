@@ -432,6 +432,62 @@ footer {
   color: var(--muted);
 }
 
+/* ---------------- Decisión única por vista ---------------- */
+
+.decision-banner {
+  margin: 6px 0 18px;
+}
+
+.decision-banner-inner {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 12px;
+  padding: 16px 18px;
+  background: var(--panel-2);
+}
+
+.decision-banner-inner.d-sig-buy { border-left-color: var(--buy); }
+.decision-banner-inner.d-sig-hold { border-left-color: var(--hold); }
+.decision-banner-inner.d-sig-sell { border-left-color: var(--sell); }
+
+.decision-pill {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 6px 14px;
+  border-radius: 14px;
+  white-space: nowrap;
+}
+
+.decision-pill.sig-buy { color: var(--buy); background: rgba(38, 162, 105, 0.15); }
+.decision-pill.sig-hold { color: var(--hold); background: rgba(210, 153, 34, 0.15); }
+.decision-pill.sig-sell { color: var(--sell); background: rgba(241, 76, 76, 0.15); }
+
+.decision-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.decision-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.decision-meta {
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+@media (max-width: 560px) {
+  .decision-banner-inner {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
 /* ============ Metodología ============ */
 
 .stepper {

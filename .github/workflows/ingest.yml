@@ -2,7 +2,7 @@ name: Ingesta y modelo de sentimiento
 
 on:
   schedule:
-    - cron: "0 22 * * *"
+    - cron: "0 23 * * *"
   workflow_dispatch:
   push:
     branches:

@@ -1,3 +1,4 @@
+import ast
 import json
 import time
 from datetime import date, datetime, timezone
@@ -17,6 +18,25 @@ def log(message):
     print(f"[ingest] ({elapsed:6.1f}s) {message}")
 
 
+def _unwrap(value):
+    if isinstance(value, str) and value.lstrip().startswith("{"):
+        try:
+            return ast.literal_eval(value)
+        except Exception:
+            return value
+    return value
+
+
+def _dig(item, *paths, default=None):
+    for key in paths:
+        if not isinstance(item, dict):
+            return default
+        item = item.get(key)
+        if item is None:
+            return default
+    return item
+
+
 def _fetch_news(ticker):
     try:
         ticker_obj = yf.Ticker(ticker)
@@ -28,27 +48,48 @@ def _fetch_news(ticker):
     for item in items[:25]:
         if not isinstance(item, dict):
             continue
-        title = item.get("title") or item.get("headline") or item.get("description")
-        url = item.get("url") or item.get("link")
+        content = _unwrap(item.get("content"))
+        if not isinstance(content, dict):
+            content = item
+        title = (
+            _dig(content, "title")
+            or _dig(content, "headline")
+            or _dig(content, "description")
+            or item.get("title")
+            or item.get("headline")
+            or item.get("description")
+        )
+        url = (
+            _dig(_unwrap(_dig(content, "canonicalUrl")), "url")
+            or _dig(_unwrap(_dig(content, "clickThroughUrl")), "url")
+            or item.get("url")
+            or item.get("link")
+        )
         if not title or not url:
             continue
-        publish_time = item.get("providerPublishTime") or item.get("published_at")
+        publish_time = content.get("pubDate") or content.get("displayTime")
+        publish_time = publish_time or item.get("providerPublishTime") or item.get("published_at")
         fecha = None
-        if publish_time:
+        if isinstance(publish_time, (int, float)):
+            fecha = datetime.fromtimestamp(publish_time, tz=timezone.utc)
+        elif publish_time:
             try:
-                if isinstance(publish_time, (int, float)):
-                    fecha = datetime.fromtimestamp(publish_time, tz=timezone.utc)
-                else:
-                    fecha = pd.to_datetime(publish_time).to_pydatetime()
+                fecha = pd.to_datetime(publish_time).to_pydatetime()
             except Exception:
                 fecha = None
         if hasattr(fecha, "to_pydatetime"):
             fecha = fecha.to_pydatetime()
+        provider = _unwrap(content.get("provider"))
+        if isinstance(provider, dict):
+            publisher = provider.get("displayName") or ""
+        else:
+            publisher = str(provider or "")
+        publisher = publisher or str(item.get("publisher") or item.get("source") or "")
         rows.append(
             {
                 "titulo": " ".join(str(title).split()),
                 "url": str(url),
-                "publisher": str(item.get("publisher") or item.get("source") or ""),
+                "publisher": publisher,
                 "fecha": fecha,
             }
         )
