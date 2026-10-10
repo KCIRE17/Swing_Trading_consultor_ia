@@ -1,0 +1,54 @@
+{
+  "fecha": "2026-09-16T01:25:28.984425+00:00",
+  "clase": "TfidfVectorizer + LogisticRegression",
+  "n_total": 12831,
+  "n_train": 10264,
+  "n_test": 2567,
+  "accuracy": 0.6642,
+  "f1_macro": 0.6577,
+  "classes": [
+    "NEG",
+    "NEU",
+    "POS"
+  ],
+  "entorno": {
+    "python": "3.12.2",
+    "scikit_learn": "1.9.1",
+    "joblib": "1.6.0",
+    "numpy": "2.5.3",
+    "pandas": "3.0.5"
+  },
+  "report": {
+    "NEG": {
+      "precision": 0.5948158253751705,
+      "recall": 0.6517189835575485,
+      "f1-score": 0.6219686162624821,
+      "support": 669.0
+    },
+    "NEU": {
+      "precision": 0.7469077069457659,
+      "recall": 0.6541666666666667,
+      "f1-score": 0.6974677920924034,
+      "support": 1200.0
+    },
+    "POS": {
+      "precision": 0.6181353767560664,
+      "recall": 0.6934097421203438,
+      "f1-score": 0.6536124240378123,
+      "support": 698.0
+    },
+    "accuracy": 0.6641994546162836,
+    "macro avg": {
+      "precision": 0.6532863030256676,
+      "recall": 0.6664317974481864,
+      "f1-score": 0.6576829441308992,
+      "support": 2567.0
+    },
+    "weighted avg": {
+      "precision": 0.6722553675444654,
+      "recall": 0.6641994546162836,
+      "f1-score": 0.6658667030653984,
+      "support": 2567.0
+    }
+  }
+}

@@ -11,11 +11,18 @@ wheels/
 
 # Env files (secrets)
 .env
+config.bat
 
 # Deploy logs
 *.log
 log.json
 *-log-export-*.json
 
-# Modelo de sentimiento (se reentrena en GitHub Actions)
-models/
+# Modelo de sentimiento
+# Se versiona sentiment_model.joblib + sentiment_meta.json para que la app
+# funcione sin reentrenar. El resto de artefactos de entrenamiento se ignoran.
+models/*
+!models/sentiment_model.joblib
+!models/sentiment_meta.json
+models/*.pkl
+models/*.tmp

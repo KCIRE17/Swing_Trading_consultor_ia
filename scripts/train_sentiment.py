@@ -206,6 +206,7 @@ def main():
         "accuracy": round(accuracy, 4),
         "f1_macro": round(f1_macro, 4),
         "classes": sorted(pipeline.classes_.tolist()),
+        "entorno": _entorno(),
         "report": report,
     }
     META_PATH.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -215,6 +216,21 @@ def main():
     print(json.dumps(report, indent=2))
     print(f"[train] Modelo guardado en: {MODEL_PATH}")
     print(f"[train] Meta: {META_PATH}")
+
+
+def _entorno():
+    """Versiones con las que se entreno. Un .joblib no es portable entre
+    versiones mayores de scikit-learn: registrarlas evita fallar en runtime."""
+    import numpy
+    import sklearn
+
+    return {
+        "python": sys.version.split()[0],
+        "scikit_learn": sklearn.__version__,
+        "joblib": joblib.__version__,
+        "numpy": numpy.__version__,
+        "pandas": pd.__version__,
+    }
 
 
 if __name__ == "__main__":
