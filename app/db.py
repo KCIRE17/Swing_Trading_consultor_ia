@@ -281,6 +281,8 @@ def json_loads(value):
     import json
     if value is None:
         return None
+    if isinstance(value, (dict, list)):
+        return value
     return json.loads(value)
 
 

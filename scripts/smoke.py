@@ -88,6 +88,22 @@ def run_no_key_degrade():
         check("sentimiento: modelo disponible", False, "corre scripts/train_sentiment.py")
 
 
+def run_forecast_roundtrip():
+    try:
+        snap = db.read_latest_forecast("NVDA")
+        if snap is None:
+            check("db: forecast round-trip (jsonb a python)", True, "sin snapshot aun; el ETL lo crea")
+            return
+        ok = (
+            isinstance(snap.get("forecast"), list)
+            and isinstance(snap.get("order"), dict)
+            and bool(snap.get("forecast"))
+        )
+        check("db: forecast round-trip (jsonb a python)", ok, str(snap)[:200])
+    except Exception as exc:
+        check("db: forecast round-trip (jsonb a python)", False, repr(exc))
+
+
 def run_backtest(ticker="NVDA"):
     start = time.time()
     frame = fetch_ohlcv(ticker, "1y")
@@ -116,6 +132,7 @@ def main():
             check("db: conexion y esquema Supabase", db.connected())
         except Exception as exc:
             check("db: conexion y esquema Supabase", False, repr(exc))
+        run_forecast_roundtrip()
     else:
         check("db: DATABASE_URL (Sin base local)", False, "no configurada; el fallback usa yfinance en vivo")
 

@@ -46,12 +46,26 @@ jobs:
         run: |
           python - <<'PY'
           from app import db
+
+          errores = []
           for ticker in ["NVDA", "AAPL", "MSFT"]:
-              frame = db.read_ohlcv(ticker, 10)
-              news = db.read_news(ticker, 3)
-              snap = db.read_latest_forecast(ticker)
-              print(f"{ticker}: velas={len(frame) if frame is not None else 0} "
-                    f"noticias={len(news)} forecast={'ok' if snap else 'none'}")
+              fila = f"{ticker}: velas=0 noticias=0 forecast=none"
+              try:
+                  frame = db.read_ohlcv(ticker, 10)
+                  news = db.read_news(ticker, 3)
+                  snap = db.read_latest_forecast(ticker)
+                  fila = (f"{ticker}: velas={len(frame) if frame is not None else 0} "
+                          f"noticias={len(news)} forecast={'ok' if snap else 'none'}")
+              except Exception as exc:
+                  errores.append((ticker, repr(exc)))
+              print(fila)
+
+          if errores:
+              for ticker, error in errores:
+                  print(f"WARNING {ticker}: {error}", flush=True)
+
+          if len(errores) == 3:
+              raise SystemExit("ERROR: ningun ticker pudo leerse de Supabase")
           PY
 
   smoke:
