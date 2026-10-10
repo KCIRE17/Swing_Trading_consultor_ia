@@ -38,7 +38,10 @@ def fetch_ohlcv(ticker, period="6mo", force=False):
     frame = None
     source = "supabase"
     if db.available():
-        frame = db.read_ohlcv(ticker.upper(), PERIOD_LOOKBACK.get(period, 180))
+        try:
+            frame = db.read_ohlcv(ticker.upper(), PERIOD_LOOKBACK.get(period, 180))
+        except Exception:
+            frame = None
         if frame is not None and not _is_fresh(frame):
             frame = None
 

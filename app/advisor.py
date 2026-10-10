@@ -194,21 +194,22 @@ def advise_backtest(metrics):
             "Las reglas de entrada (promedio de 50 días más el resto de indicadores) no se activaron en ese tramo.",
         )
 
-    partes = [
-        f"Tras {n_trades} operaciones simuladas, la estrategia acertó el {win_rate * 100:.1f}% de las veces, "
-        f"con una caída máxima del {max_dd:.1f}%."
-    ]
+    # win_rate y max_dd llegan en None cuando la serie no alcanza para
+    # calcularlos. Formatearlos sin comprobarlo revienta con TypeError.
+    wr_txt = f"acertó el {win_rate * 100:.1f}% de las veces" if _safe(win_rate) else "no tiene aciertos medibles"
+    dd_txt = f"con una caída máxima del {max_dd:.1f}%." if _safe(max_dd) else "sin caída máxima medible."
+    partes = [f"Tras {n_trades} operaciones simuladas, la estrategia {wr_txt}, {dd_txt}"]
     advertencias = []
 
-    if win_rate is not None and win_rate < 0.5:
+    if _safe(win_rate) and win_rate < 0.5:
         recom = AMBER
         advertencias.append("El acierto es menor al 50%: la estrategia pierde más operaciones de las que gana.")
-    elif win_rate is not None and win_rate >= 0.6:
+    elif _safe(win_rate) and win_rate >= 0.6:
         recom = GREEN
     else:
         recom = AMBER
 
-    if exceso is not None:
+    if _safe(exceso):
         if exceso > 0:
             partes.append(f"Superó a mantenerse sin operar (Buy & Hold) en {exceso:+.2f} puntos.")
         elif exceso < 0:
