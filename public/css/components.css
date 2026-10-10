@@ -1,0 +1,788 @@
+/* Kinetic Alpha - componentes
+ *
+ * app.js emite un vocabulario de clases propio (card, kpi, m-cell, matrix,
+ * stepper, pipe-step, news-item, vs-card, advice-card, ...) que nacio con la
+ * paleta anterior. Este archivo reescribe su apariencia para que coincida con
+ * las recetas de los mockups sin reescribir el marcado ni el JS.
+ *
+ * Recetas de la referencia (una por vista, en code.html):
+ *   tarjeta      bg-surface-container-low p-space-md rounded-lg shadow-sm
+ *   tarjeta alta bg-surface-container-low rounded-xl p-space-lg shadow-lg
+ *   grafico      bg-surface-container-lowest rounded-lg p-space-sm
+ *   control      bg-surface-container-low px-space-md py-1.5 rounded-lg
+ *   select       bg-surface-container rounded px-space-sm py-1
+ *   eyebrow      bg-surface-container-high text-primary px-space-xs py-0.5
+ *                rounded tracking-wider uppercase font-semibold
+ *   pill activo  bg-surface-container-highest text-primary rounded shadow-sm
+ */
+
+/* ---------- 1. Tarjetas ---------- */
+
+.card {
+  background: var(--ka-surface-container-low);
+  border: 0;
+  border-radius: var(--ka-radius-lg);
+  padding: var(--ka-space-md);
+  box-shadow: var(--ka-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ka-space-sm);
+}
+
+.card h2 {
+  font-family: var(--ka-font-headline-md);
+  font-size: var(--ka-text-headline-md-size);
+  line-height: var(--ka-text-headline-md-lh);
+  font-weight: 700;
+  letter-spacing: var(--ka-text-headline-md-ls);
+  color: var(--ka-on-surface);
+  margin: 0;
+}
+
+.card h3 {
+  font-family: var(--ka-font-headline-md);
+  font-size: var(--ka-text-headline-md-size);
+  font-weight: 600;
+  color: var(--ka-on-surface);
+  margin: 0;
+}
+
+/* Los paneles de nivel superior usan rounded-xl / shadow-lg, no rounded-lg. */
+.view-intro,
+.card.card-xl {
+  border-radius: var(--ka-radius-xl);
+  padding: var(--ka-space-lg);
+  box-shadow: var(--ka-shadow-lg);
+}
+
+.chart-hint,
+.hint {
+  font-size: var(--ka-text-body-sm-size);
+  line-height: var(--ka-text-body-sm-lh);
+  color: var(--ka-on-surface-variant);
+  margin: 0;
+}
+
+/* ---------- 2. Etiqueta en mayusculas (nivel 4) ---------- */
+
+.ka-eyebrow,
+.view-chip,
+.chip-descr,
+.chip-pred,
+.chip-pres {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ka-space-xs);
+  background: var(--ka-surface-container-high);
+  color: var(--ka-primary);
+  padding: 0.125rem var(--ka-space-xs);
+  border-radius: var(--ka-radius-default);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: var(--ka-text-label-sm-size);
+  line-height: var(--ka-text-label-sm-lh);
+}
+
+/* ---------- 3. Barra de control (activo + periodo) ---------- */
+
+.controls,
+.ka-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--ka-space-md);
+  flex-wrap: wrap;
+}
+
+.controls > .field,
+.controls label {
+  display: flex;
+  align-items: center;
+  gap: var(--ka-space-sm);
+  background: var(--ka-surface-container-low);
+  padding: 0.375rem var(--ka-space-md);
+  border-radius: var(--ka-radius-lg);
+}
+
+select,
+textarea,
+input[type="text"],
+input[type="number"] {
+  background: var(--ka-surface-container);
+  color: var(--ka-on-surface);
+  font-family: var(--ka-font-label-md);
+  font-size: var(--ka-text-label-md-size);
+  border-radius: var(--ka-radius-default);
+  padding: 0.25rem var(--ka-space-sm);
+  min-height: 0;
+}
+
+select:focus,
+textarea:focus,
+input:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: 0 0 0 1px var(--ka-primary);
+}
+
+select option {
+  background: var(--ka-surface-container);
+  color: var(--ka-on-surface);
+}
+
+/* ---------- 4. KPIs ---------- */
+
+/* grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-space-md */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--ka-space-md);
+  margin-bottom: var(--ka-space-md);
+}
+
+@media (min-width: 768px) {
+  .kpis {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (min-width: 1280px) {
+  .kpis {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.kpi {
+  background: var(--ka-surface-container-low);
+  border-radius: var(--ka-radius-lg);
+  padding: var(--ka-space-sm) var(--ka-space-md);
+  box-shadow: var(--ka-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.kpi .label {
+  font-size: var(--ka-text-label-sm-size);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ka-on-surface-variant);
+}
+
+.kpi .value {
+  font-family: var(--ka-font-headline-xl);
+  font-size: var(--ka-text-headline-lg-size);
+  font-weight: 700;
+  color: var(--ka-on-surface);
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi .sub {
+  font-size: var(--ka-text-body-sm-size);
+  color: var(--ka-on-surface-variant);
+}
+
+/* ---------- 5. Tablero de mercado ---------- */
+
+/* grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-space-md */
+.market-board {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--ka-space-md);
+}
+
+@media (min-width: 768px) {
+  .market-board {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (min-width: 1280px) {
+  .market-board {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.m-cell {
+  background: var(--ka-surface-container);
+  border: 0;
+  border-left: 3px solid transparent;
+  border-radius: var(--ka-radius-lg);
+  padding: var(--ka-space-sm) var(--ka-space-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: background 0.15s ease;
+}
+
+.m-cell:hover {
+  background: var(--ka-surface-container-high);
+}
+
+.m-ticker {
+  font-family: var(--ka-font-label-md);
+  font-size: var(--ka-text-label-md-size);
+  font-weight: 600;
+  color: var(--ka-on-surface);
+}
+
+.m-price {
+  font-family: var(--ka-font-headline-xl);
+  font-size: var(--ka-text-headline-lg-size);
+  font-weight: 700;
+  color: var(--ka-on-surface);
+  font-variant-numeric: tabular-nums;
+}
+
+.m-sub {
+  font-size: var(--ka-text-body-sm-size);
+  color: var(--ka-on-surface-variant);
+}
+
+.m-err {
+  color: var(--ka-error);
+  font-size: var(--ka-text-body-sm-size);
+}
+
+/* ---------- 6. Chips de senal ---------- */
+
+.forecast-chip,
+.news-badge,
+.advice-badge,
+.decision-pill,
+.badge-rules {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ka-space-xs);
+  padding: 0.125rem var(--ka-space-xs);
+  border-radius: var(--ka-radius-default);
+  font-family: var(--ka-font-label-md);
+  font-size: var(--ka-text-label-sm-size);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.forecast-chip,
+.badge-rules,
+.advice-badge {
+  background: var(--ka-surface-container-highest);
+  color: var(--ka-primary);
+}
+
+.badge-gemini {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ka-space-xs);
+  padding: 0.125rem var(--ka-space-xs);
+  border-radius: var(--ka-radius-default);
+  font-size: var(--ka-text-label-sm-size);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--ka-secondary-container);
+  color: var(--ka-on-secondary-container);
+}
+
+.forecast-list {
+  display: flex;
+  gap: var(--ka-space-sm);
+  flex-wrap: wrap;
+}
+
+/* ---------- 7. Checklist ---------- */
+
+.check-row {
+  display: grid;
+  grid-template-columns: 1.25rem 1fr auto;
+  align-items: center;
+  gap: var(--ka-space-sm);
+  padding: var(--ka-space-sm) 0;
+  border-bottom: 1px solid var(--ka-border-hairline);
+}
+
+.check-row:last-child {
+  border-bottom: 0;
+}
+
+.check-mark {
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: var(--ka-radius-default);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.check-ok .check-mark {
+  background: var(--ka-primary-container);
+  color: var(--ka-on-primary-container);
+}
+
+.check-no .check-mark {
+  background: var(--ka-error-container);
+  color: var(--ka-on-error-container);
+}
+
+.check-label {
+  font-size: var(--ka-text-body-sm-size);
+  color: var(--ka-on-surface);
+}
+
+.check-det {
+  font-family: var(--ka-font-label-md);
+  font-size: var(--ka-text-label-sm-size);
+  color: var(--ka-on-surface-variant);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 8. Matriz de decision ---------- */
+
+.matrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ka-text-body-sm-size);
+}
+
+.matrix th {
+  font-family: var(--ka-font-label-md);
+  font-size: var(--ka-text-label-sm-size);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ka-on-surface-variant);
+  text-align: left;
+  padding: var(--ka-space-xs) var(--ka-space-sm);
+  border-bottom: 1px solid var(--ka-border-structural);
+}
+
+.matrix td {
+  padding: var(--ka-space-sm);
+  border-bottom: 1px solid var(--ka-border-hairline);
+  color: var(--ka-on-surface);
+}
+
+.matrix tbody tr:hover {
+  background: var(--ka-row-hover);
+}
+
+.mz-current {
+  outline: 1px solid var(--ka-primary);
+  outline-offset: -1px;
+}
+
+.rec-pill,
+.rec-aumentar,
+.rec-mantener,
+.rec-retirar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.125rem var(--ka-space-xs);
+  border-radius: var(--ka-radius-default);
+  font-size: var(--ka-text-label-sm-size);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ---------- 9. Stepper TDSP ---------- */
+
+.stepper {
+  background: var(--ka-surface-container-low);
+  border-radius: var(--ka-radius-lg);
+  padding: var(--ka-space-md);
+  box-shadow: var(--ka-shadow-sm);
+}
+
+.stepper-nav {
+  display: flex;
+  gap: var(--ka-space-xs);
+  margin-bottom: var(--ka-space-md);
+  flex-wrap: wrap;
+}
+
+.step-btn,
+.step-prev,
+.step-next {
+  background: var(--ka-surface-container);
+  color: var(--ka-on-surface-variant);
+  border: 0;
+  border-radius: var(--ka-radius-default);
+  padding: 0.375rem var(--ka-space-md);
+  font-family: var(--ka-font-label-md);
+  font-size: var(--ka-text-label-md-size);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.step-btn:hover,
+.step-prev:hover,
+.step-next:hover {
+  background: var(--ka-surface-container-high);
+  color: var(--ka-on-surface);
+}
+
+.step-btn.active,
+.step-btn[aria-current="step"] {
+  background: var(--ka-surface-container-highest);
+  color: var(--ka-primary);
+  font-weight: 600;
+  box-shadow: var(--ka-shadow-sm);
+}
+
+.stepper-body {
+  font-size: var(--ka-text-body-md-size);
+  line-height: var(--ka-text-body-md-lh);
+  color: var(--ka-on-surface);
+}
+
+.stepper-controls {
+  display: flex;
+  gap: var(--ka-space-sm);
+  margin-top: var(--ka-space-md);
+  align-items: center;
+}
+
+/* ---------- 10. Pipeline vertical ---------- */
+
+.pipeline-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.pipe-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--ka-space-md);
+  align-items: start;
+}
+
+.pipe-num {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--ka-radius-default);
+  background: var(--ka-surface-container-highest);
+  color: var(--ka-primary);
+  font-family: var(--ka-font-label-md);
+  font-size: var(--ka-text-label-sm-size);
+  font-weight: 600;
+}
+
+.pipe-arrow {
+  width: 1px;
+  height: var(--ka-space-md);
+  background: var(--ka-border-structural);
+  margin: var(--ka-space-xs) 0 var(--ka-space-xs) 0.85rem;
+}
+
+/* ---------- 11. Noticias ---------- */
+
+.news-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ka-space-sm);
+}
+
+.news-item {
+  background: var(--ka-surface-container);
+  border-radius: var(--ka-radius-lg);
+  padding: var(--ka-space-sm) var(--ka-space-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.news-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--ka-space-sm);
+  font-size: var(--ka-text-label-sm-size);
+  color: var(--ka-on-surface-variant);
+}
+
+.news-body {
+  font-size: var(--ka-text-body-sm-size);
+  color: var(--ka-on-surface);
+}
+
+.news-bar-row {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr 2.75rem;
+  gap: var(--ka-space-sm);
+  align-items: center;
+  font-size: var(--ka-text-body-sm-size);
+}
+
+.news-track {
+  height: 0.5rem;
+  border-radius: var(--ka-radius-full);
+  background: var(--ka-surface-container);
+  overflow: hidden;
+}
+
+.news-fill {
+  height: 100%;
+  border-radius: var(--ka-radius-full);
+}
+
+.n-pos .news-fill,
+.news-fill.n-pos {
+  background: var(--ka-primary);
+}
+.n-neg .news-fill,
+.news-fill.n-neg {
+  background: var(--ka-error);
+}
+.n-neu .news-fill,
+.news-fill.n-neu {
+  background: var(--ka-tertiary);
+}
+
+/* ---------- 12. Versus / comparativa ---------- */
+
+.vs-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ka-space-sm);
+}
+
+.vs-card {
+  background: var(--ka-surface-container);
+  border-radius: var(--ka-radius-lg);
+  padding: var(--ka-space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ka-space-xs);
+}
+
+.vs-letter {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--ka-radius-default);
+  background: var(--ka-surface-container-highest);
+  color: var(--ka-primary);
+  font-family: var(--ka-font-headline-xl);
+  font-weight: 700;
+}
+
+/* ---------- 13. Consejo / advice ---------- */
+
+.advice {
+  background: var(--ka-surface-container);
+  border-radius: var(--ka-radius-lg);
+  padding: var(--ka-space-sm) var(--ka-space-md);
+}
+
+.advice-card {
+  background: var(--ka-surface-container);
+  border-radius: var(--ka-radius-lg);
+  padding: var(--ka-space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ka-space-xs);
+  border-left: 3px solid var(--ka-primary);
+}
+
+.advice-top {
+  display: flex;
+  align-items: center;
+  gap: var(--ka-space-sm);
+}
+
+.advice-warn-text,
+.warn-text {
+  color: var(--ka-tertiary);
+  font-size: var(--ka-text-body-sm-size);
+}
+
+/* ---------- 14. Banner de decision ---------- */
+
+.decision-banner {
+  background: var(--ka-surface-container-low);
+  border-radius: var(--ka-radius-xl);
+  padding: var(--ka-space-lg);
+  box-shadow: var(--ka-shadow-lg);
+  margin-bottom: var(--ka-space-md);
+}
+
+.decision-banner-inner,
+.decision-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ka-space-xs);
+}
+
+.signal-hero {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ka-space-md);
+  flex-wrap: wrap;
+}
+
+.hero-levels {
+  display: flex;
+  align-items: center;
+  gap: var(--ka-space-sm);
+  flex-wrap: wrap;
+}
+
+.hero-sub,
+.decision-meta {
+  font-size: var(--ka-text-body-sm-size);
+  color: var(--ka-on-surface-variant);
+}
+
+.decision-title {
+  font-family: var(--ka-font-headline-md);
+  font-size: var(--ka-text-headline-lg-size);
+  font-weight: 700;
+  color: var(--ka-on-surface);
+  letter-spacing: var(--ka-text-headline-lg-ls);
+}
+
+.decision-pill {
+  font-family: var(--ka-font-headline-xl);
+  font-size: var(--ka-text-headline-md-size);
+  font-weight: 700;
+  padding: var(--ka-space-xs) var(--ka-space-md);
+  border-radius: var(--ka-radius-lg);
+}
+
+.sig-buy {
+  background: var(--ka-primary-container);
+  color: var(--ka-on-primary-container);
+}
+.sig-hold {
+  background: var(--ka-tertiary-container);
+  color: var(--ka-on-tertiary-container);
+}
+.sig-sell {
+  background: var(--ka-error-container);
+  color: var(--ka-on-error-container);
+}
+
+/* ---------- 15. Narracion IA ---------- */
+
+.ai-summary {
+  background: var(--ka-surface-container);
+  border-radius: var(--ka-radius-lg);
+  padding: var(--ka-space-md);
+}
+
+.narracion-text,
+.narracion-bullets {
+  font-size: var(--ka-text-body-md-size);
+  line-height: var(--ka-text-body-md-lh);
+  color: var(--ka-on-surface);
+  margin: 0;
+  padding-left: var(--ka-space-md);
+}
+
+.deliverable,
+.reason {
+  font-size: var(--ka-text-body-sm-size);
+  color: var(--ka-on-surface-variant);
+}
+
+/* ---------- 16. Glosario y herramientas ---------- */
+
+.glossary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--ka-space-md);
+}
+
+.glossary-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ka-space-xs);
+}
+
+.glossary-item {
+  display: flex;
+  gap: var(--ka-space-sm);
+  font-size: var(--ka-text-body-sm-size);
+  color: var(--ka-on-surface-variant);
+}
+
+.glossary-item b {
+  color: var(--ka-on-surface);
+  font-weight: 600;
+}
+
+.tools-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--ka-space-sm);
+}
+
+.tool-item {
+  background: var(--ka-surface-container);
+  border-radius: var(--ka-radius-lg);
+  padding: var(--ka-space-sm) var(--ka-space-md);
+  font-size: var(--ka-text-body-sm-size);
+  color: var(--ka-on-surface);
+}
+
+/* ---------- 17. Cadena de pipeline horizontal ---------- */
+
+.chain-flow {
+  display: flex;
+  align-items: center;
+  gap: var(--ka-space-sm);
+  flex-wrap: wrap;
+}
+
+.chain-node {
+  background: var(--ka-surface-container);
+  border-radius: var(--ka-radius-lg);
+  padding: var(--ka-space-xs) var(--ka-space-md);
+  font-size: var(--ka-text-label-md-size);
+  color: var(--ka-on-surface);
+}
+
+.chain-arrow {
+  color: var(--ka-on-surface-variant);
+}
+
+/* ---------- 18. Rejillas del layout ---------- */
+
+/* grid grid-cols-1 lg:grid-cols-2 gap-space-lg */
+.grid,
+.two-col,
+.glossary-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ka-space-lg);
+}
+
+@media (min-width: 1024px) {
+  .grid,
+  .two-col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ---------- 19. Utilidades de estado ---------- */
+
+.up {
+  color: var(--ka-primary);
+}
+.down {
+  color: var(--ka-error);
+}
+.error-box {
+  background: var(--ka-error-container);
+  color: var(--ka-on-error-container);
+  border-radius: var(--ka-radius-lg);
+  padding: var(--ka-space-sm) var(--ka-space-md);
+  font-size: var(--ka-text-body-sm-size);
+}

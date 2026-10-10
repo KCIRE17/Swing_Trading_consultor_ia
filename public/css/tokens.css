@@ -1,0 +1,154 @@
+/* ------------------------------------------------------------------
+ * Kinetic Alpha - design tokens
+ * Generado desde swing_trading_views/<mockup>/code.html (tailwind.config).
+ * NO editar a mano: regenerar con scripts/extract_tokens.py
+ * Fuente de verdad: el mockup renderizado, no la prosa del DESIGN.md
+ * ------------------------------------------------------------------ */
+
+:root {
+  /* --- Color: superficies (rampa de 5 niveles + borde) --- */
+  --ka-surface-container: #171f33;
+  --ka-surface-bright: #31394d;
+  --ka-on-secondary-fixed: #001e2c;
+  --ka-error: #ffb4ab;
+  --ka-surface: #0b1326;
+  --ka-on-surface-variant: #bbcabf;
+  --ka-surface-variant: #2d3449;
+  --ka-surface-tint: #4edea3;
+  --ka-surface-container-lowest: #060e20;
+  --ka-on-tertiary-fixed-variant: #653e00;
+  --ka-inverse-on-surface: #283044;
+  --ka-tertiary-fixed-dim: #ffb95f;
+  --ka-on-primary-fixed: #002113;
+  --ka-on-primary: #003824;
+  --ka-on-secondary-container: #00374d;
+  --ka-outline-variant: #3c4a42;
+  --ka-on-tertiary: #472a00;
+  --ka-primary: #4edea3;
+  --ka-on-primary-container: #00422b;
+  --ka-tertiary: #ffb95f;
+  --ka-on-secondary: #00354a;
+  --ka-on-tertiary-container: #523200;
+  --ka-primary-container: #10b981;
+  --ka-surface-container-highest: #2d3449;
+  --ka-tertiary-fixed: #ffddb8;
+  --ka-on-surface: #dae2fd;
+  --ka-error-container: #93000a;
+  --ka-primary-fixed: #6ffbbe;
+  --ka-surface-dim: #0b1326;
+  --ka-on-error: #690005;
+  --ka-primary-fixed-dim: #4edea3;
+  --ka-secondary-container: #00a6e0;
+  --ka-inverse-surface: #dae2fd;
+  --ka-background: #0b1326;
+  --ka-tertiary-container: #e29100;
+  --ka-on-primary-fixed-variant: #005236;
+  --ka-inverse-primary: #006c49;
+  --ka-surface-container-low: #131b2e;
+  --ka-outline: #86948a;
+  --ka-secondary-fixed: #c4e7ff;
+  --ka-on-secondary-fixed-variant: #004c69;
+  --ka-on-background: #dae2fd;
+  --ka-on-tertiary-fixed: #2a1700;
+  --ka-on-error-container: #ffdad6;
+  --ka-surface-container-high: #222a3d;
+  --ka-secondary: #7bd0ff;
+  --ka-secondary-fixed-dim: #7bd0ff;
+
+  /* --- Color: uso semantico de senal --- */
+  --ka-signal-buy: var(--ka-primary);
+  --ka-signal-buy-ink: var(--ka-on-primary);
+  --ka-signal-ai: var(--ka-secondary);
+  --ka-signal-hold: var(--ka-tertiary);
+  --ka-signal-sell: var(--ka-error);
+  --ka-signal-sell-surface: var(--ka-error-container);
+  --ka-signal-sell-on: var(--ka-on-error-container);
+
+  /* --- Radios (del mockup, no del DESIGN.md: full=0.75rem) --- */
+  --ka-radius-default: 0.125rem;
+  --ka-radius-lg: 0.25rem;
+  --ka-radius-xl: 0.5rem;
+  --ka-radius-full: 0.75rem;
+
+  /* --- Espaciado --- */
+  --ka-space-xl: 2.5rem;
+  --ka-space-md: 1rem;
+  --ka-margin: 1rem;
+  --ka-space-lg: 1.5rem;
+  --ka-space-xs: 0.25rem;
+  --ka-space-sm: 0.5rem;
+  --ka-gutter-desktop: 1.5rem;
+  --ka-gutter: 1rem;
+  --ka-margin-desktop: 2rem;
+
+  /* --- Familias tipograficas --- */
+  --ka-font-body-lg: Plus Jakarta Sans;
+  --ka-font-body-md: Plus Jakarta Sans;
+  --ka-font-label-sm: JetBrains Mono;
+  --ka-font-headline-md: Plus Jakarta Sans;
+  --ka-font-headline-xl: Plus Jakarta Sans;
+  --ka-font-label-lg: JetBrains Mono;
+  --ka-font-headline-lg: Plus Jakarta Sans;
+  --ka-font-label-md: JetBrains Mono;
+  --ka-font-body-sm: Plus Jakarta Sans;
+  --ka-font-headline-xl-mobile: Plus Jakarta Sans;
+
+  /* --- Tamano / interlineado --- */
+  --ka-text-body-lg-size: 1rem;
+  --ka-text-body-lg-lh: 1.5rem;
+  --ka-text-body-lg-fw: 400;
+  --ka-text-body-md-size: 0.875rem;
+  --ka-text-body-md-lh: 1.375rem;
+  --ka-text-body-md-fw: 400;
+  --ka-text-label-sm-size: 0.6875rem;
+  --ka-text-label-sm-lh: 0.875rem;
+  --ka-text-label-sm-fw: 500;
+  --ka-text-label-sm-ls: 0.04em;
+  --ka-text-headline-md-size: 1.25rem;
+  --ka-text-headline-md-lh: 1.75rem;
+  --ka-text-headline-md-fw: 600;
+  --ka-text-headline-md-ls: -0.01em;
+  --ka-text-headline-xl-size: 2.25rem;
+  --ka-text-headline-xl-lh: 2.75rem;
+  --ka-text-headline-xl-fw: 700;
+  --ka-text-headline-xl-ls: -0.02em;
+  --ka-text-label-lg-size: 0.875rem;
+  --ka-text-label-lg-lh: 1.25rem;
+  --ka-text-label-lg-fw: 500;
+  --ka-text-label-lg-ls: -0.01em;
+  --ka-text-headline-lg-size: 1.5rem;
+  --ka-text-headline-lg-lh: 2rem;
+  --ka-text-headline-lg-fw: 600;
+  --ka-text-headline-lg-ls: -0.015em;
+  --ka-text-label-md-size: 0.75rem;
+  --ka-text-label-md-lh: 1rem;
+  --ka-text-label-md-fw: 500;
+  --ka-text-label-md-ls: 0.02em;
+  --ka-text-body-sm-size: 0.75rem;
+  --ka-text-body-sm-lh: 1.125rem;
+  --ka-text-body-sm-fw: 400;
+  --ka-text-headline-xl-mobile-size: 1.75rem;
+  --ka-text-headline-xl-mobile-lh: 2.25rem;
+  --ka-text-headline-xl-mobile-fw: 700;
+  --ka-text-headline-xl-mobile-ls: -0.01em;
+
+  /* --- Compuestos --- */
+  --ka-font-body: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --ka-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --ka-border-hairline: rgba(255, 255, 255, 0.05);
+  --ka-border-structural: rgba(255, 255, 255, 0.07);
+  --ka-border-input: rgba(255, 255, 255, 0.12);
+  --ka-focus-ring: 0 0 0 3px rgba(56, 189, 248, 0.15);
+  --ka-shadow-flyout: 0 8px 24px -4px rgba(2, 6, 23, 0.65);
+
+  /* Sombras: los mockups no sobreescriben boxShadow, asi que el render usa los
+     defaults de Tailwind v3. shadow-sm es la mas usada (23x) y es la de tarjeta. */
+  --ka-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --ka-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --ka-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --ka-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --ka-shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+
+  --ka-row-hover: #152138;
+  --ka-row-height: 44px;
+}

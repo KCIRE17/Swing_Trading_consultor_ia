@@ -3,51 +3,111 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Swing Trading Consulter IA - Dashboard</title>
+  <title>Swing Trading Consultor IA · MVP TDSP</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <!-- Orden importa: tokens -> legacy -> alias -> base -> shell.
+       compat.css remapea las 11 variables de style.css a los tokens. -->
+  <link rel="stylesheet" href="/css/tokens.css" />
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/css/compat.css" />
+  <link rel="stylesheet" href="/css/base.css" />
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/shell.css" />
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div>
-        <h1>DSS Swing Trading <span class="light">con Business Analytics e IA</span></h1>
-        <p>Equipo 7 · Prototipo académico · Costo S/ 0.00 · Datos, ML y despliegue en la nube</p>
+  <header class="ka-topbar">
+    <div class="ka-topbar-inner">
+      <div class="ka-bar">
+        <div class="ka-brand">
+          <div class="ka-brand-id">
+            <img class="ka-brand-mark" src="/favicon.svg" alt="Swing Trading Consultor IA" width="32" height="32" />
+            <span class="ka-brand-name">Swing Trading Consultor IA</span>
+            <span class="ka-tag">MVP TDSP</span>
+          </div>
+
+          <div class="ka-controls">
+            <div class="ka-control">
+              <span class="ka-control-label">Activo</span>
+              <select class="ka-select" id="ticker" aria-label="Activo"></select>
+            </div>
+            <div class="ka-control">
+              <span class="ka-control-label">Rango</span>
+              <div class="ka-seg" id="periodSeg" role="group" aria-label="Rango temporal">
+                <button type="button" data-period="1mo">1mo</button>
+                <button type="button" data-period="3mo">3mo</button>
+                <button type="button" data-period="6mo" aria-pressed="true">6mo</button>
+                <button type="button" data-period="1y">1y</button>
+              </div>
+              <!-- app.js lee byId("period").value; el control visible es segmentado -->
+              <input type="hidden" id="period" value="6mo" />
+            </div>
+          </div>
+        </div>
+
+        <div class="ka-bar">
+          <div class="ka-health" id="health" aria-live="polite">
+            <div class="ka-health-item">
+              <span class="ka-dot ka-dot-off"></span>
+              <span class="ka-health-k">DB Postgres</span>
+              <span class="ka-health-v" id="hDb">…</span>
+            </div>
+            <div class="ka-health-item">
+              <span class="ka-dot ka-dot-off"></span>
+              <span class="ka-health-k">ML Sentimiento</span>
+              <span class="ka-health-v" id="hMl">…</span>
+            </div>
+            <div class="ka-health-item">
+              <span class="ka-dot ka-dot-off"></span>
+              <span class="ka-health-k">Gemini</span>
+              <span class="ka-health-v" id="hGemini">…</span>
+            </div>
+            <div class="ka-health-item">
+              <span class="ka-health-k">Feed</span>
+              <span class="ka-health-v" id="hFeed">…</span>
+            </div>
+          </div>
+          <div class="ka-avatar">
+            <svg class="ka-i ka-i-18" aria-hidden="true"><use href="/icons/sprite.svg#i-person"></use></svg>
+          </div>
+        </div>
       </div>
-      <a href="/docs" style="color: var(--accent); font-size: 13px;">Documentación de la API</a>
-    </header>
 
-    <nav class="tabs" id="tabsNav">
-      <button class="tab active" data-tab="descriptiva">1 · Descriptiva</button>
-      <button class="tab" data-tab="predictiva">2 · Predictiva</button>
-      <button class="tab" data-tab="prescriptiva">3 · Prescriptiva</button>
-    </nav>
+      <div class="ka-navrow">
+        <nav class="ka-nav" id="tabsNav" aria-label="Vistas del análisis">
+          <a class="ka-nav-link tab" data-tab="descriptiva" href="#/descriptiva" aria-current="page">Vista Descriptiva</a>
+          <a class="ka-nav-link tab" data-tab="predictiva" href="#/predictiva">Vista Predictiva</a>
+          <a class="ka-nav-link tab" data-tab="prescriptiva" href="#/prescriptiva">Vista Prescriptiva</a>
+          <a class="ka-nav-link tab" data-tab="screener" href="#/screener">Screener de Mercado</a>
+          <a class="ka-nav-link tab" data-tab="metodologia" href="#/metodologia">Metodología TDSP</a>
+        </nav>
+        <div class="ka-horizon">
+          <svg class="ka-i" aria-hidden="true"><use href="/icons/sprite.svg#i-schedule"></use></svg>
+          <span>Swing Horizon: 3-10 Ruedas</span>
+        </div>
+      </div>
+    </div>
+  </header>
 
-    <section class="controls">
-      <label>Empresa
-        <select id="ticker"></select>
-      </label>
-      <label>Periodo
-        <select id="period">
-          <option value="3mo">3 meses</option>
-          <option value="6mo" selected>6 meses</option>
-          <option value="1y">1 año</option>
-        </select>
-      </label>
-      <button id="runBtn">Analizar</button>
-      <span id="status">Listo</span>
-    </section>
+  <main class="ka-main">
+    <div class="ka-bar ka-gap-md" style="margin-bottom: var(--ka-space-md);">
+      <button class="ka-btn ka-btn-primary" id="runBtn">
+        <svg class="ka-i" aria-hidden="true"><use href="/icons/sprite.svg#i-play_circle"></use></svg>
+        Analizar
+      </button>
+      <span class="ka-label-sm ka-muted" id="status" aria-live="polite">Listo</span>
+    </div>
 
-    <div id="errorBox" class="error-box hidden"></div>
+    <div id="errorBox" class="ka-err hidden" role="alert"></div>
 
     <!-- ============ VISTA 1 · DESCRIPTIVA ============ -->
     <section class="tab-panel active" data-panel="descriptiva">
-      <div class="view-intro">
-        <span class="view-chip chip-descr">Descriptiva</span>
+      <div class="ka-view-intro">
+        <span class="ka-view-chip descr">Descriptiva</span>
         <p><b>¿Qué está pasando?</b> Estado actual y evolución del mercado y del activo, sin interpretaciones sobre el futuro.</p>
       </div>
 
       <section class="decision-banner" id="decisionDescr"></section>
-
       <section class="kpis" id="kpisDescr"></section>
 
       <div class="card">
@@ -59,57 +119,56 @@
       <div class="card">
         <h2>El precio día a día en velas japonesas</h2>
         <p class="chart-hint">Cada vela resume un día: la línea vertical va del mínimo (low) al máximo (high) y el cuerpo del precio de apertura (open) al de cierre (close). Verde = la vela subió; rojo = bajó.</p>
-        <div class="chart-box" style="height: 320px;"><canvas id="chartCandle"></canvas></div>
+        <div class="chart-box chart-h-lg"><canvas id="chartCandle"></canvas></div>
       </div>
 
       <div class="grid">
         <div class="card">
           <h2>Precio, promedios (SMA20/SMA50) y bandas de volatilidad (ATR)</h2>
           <p class="chart-hint">La línea azul es el cierre. Las líneas amarilla (20 días) y rosa (50 días) son promedios. El área sombreada son bandas de ±1 ATR: miden cuánto se mueve el precio normalmente.</p>
-          <div class="chart-box"><canvas id="chartPrice"></canvas></div>
+          <div class="chart-box chart-h-lg"><canvas id="chartPrice"></canvas></div>
           <div class="advice" id="advicePrecio"></div>
         </div>
         <div class="card">
           <h2>Fuerza del movimiento (RSI)</h2>
           <p class="chart-hint">Indica de 0 a 100 cuánta fuerza tiene el movimiento. Cerca de 100 la subida fue intensa (posible corrección); cerca de 0 hubo una caída fuerte (posible rebote).</p>
-          <div class="chart-box"><canvas id="chartRsi"></canvas></div>
+          <div class="chart-box chart-h-sm"><canvas id="chartRsi"></canvas></div>
           <div class="advice" id="adviceRsi"></div>
         </div>
         <div class="card">
           <h2>Impulso y dirección del precio (MACD)</h2>
           <p class="chart-hint">Compara dos promedios para medir la fuerza del movimiento: barras verdes = impulso alcista; barras rojas = impulso bajista.</p>
-          <div class="chart-box"><canvas id="chartMacd"></canvas></div>
+          <div class="chart-box chart-h-sm"><canvas id="chartMacd"></canvas></div>
           <div class="advice" id="adviceMacd"></div>
         </div>
         <div class="card">
           <h2>Volumen operado</h2>
           <p class="chart-hint">Cantidad de acciones negociadas por día, coloreada por dirección del día (verde si subió, rojo si bajó).</p>
-          <div class="chart-box"><canvas id="chartVolume"></canvas></div>
+          <div class="chart-box chart-h-sm"><canvas id="chartVolume"></canvas></div>
         </div>
         <div class="card">
           <h2>Histograma de retornos diarios</h2>
           <p class="chart-hint">Frecuencia de las variaciones porcentuales del precio. Una campana centrada cerca de 0 indica estabilidad; colas anchas indican mayor variabilidad.</p>
-          <div class="chart-box"><canvas id="chartReturns"></canvas></div>
+          <div class="chart-box chart-h-sm"><canvas id="chartReturns"></canvas></div>
         </div>
       </div>
     </section>
 
     <!-- ============ VISTA 2 · PREDICTIVA ============ -->
     <section class="tab-panel" data-panel="predictiva">
-      <div class="view-intro">
-        <span class="view-chip chip-pred">Predictiva</span>
+      <div class="ka-view-intro">
+        <span class="ka-view-chip pred">Predictiva</span>
         <p><b>¿Qué puede pasar?</b> Pronóstico econométrico ARIMA, lectura cualitativa de la IA y sentimiento de las noticias.</p>
       </div>
 
       <section class="decision-banner" id="decisionPred"></section>
-
       <section class="kpis" id="kpisPred"></section>
 
       <div class="grid">
         <div class="card">
           <h2>Pronóstico ARIMA a 5 días con cono de incertidumbre ±1·ATR</h2>
           <p class="chart-hint">El modelo estadístico proyecta el precio probable a 5 ruedas. El cono amarillo refleja la volatilidad (ATR): más ancho = más incertidumbre.</p>
-          <div class="chart-box"><canvas id="chartForecast"></canvas></div>
+          <div class="chart-box chart-h-lg"><canvas id="chartForecast"></canvas></div>
           <div id="forecastChips" class="forecast-list"></div>
           <div class="advice" id="adviceArima" style="margin-top: 12px;"></div>
         </div>
@@ -117,10 +176,9 @@
           <h2>Tarjeta cualitativa de la IA (Gemini)</h2>
           <p class="chart-hint">Dirección esperada, probabilidad, nivel de riesgo y lectura técnica en lenguaje natural. Sin la clave de API, el sistema degrada a reglas cuantitativas.</p>
           <div id="iaBox">
-            <p style="color: var(--muted);">Cargando análisis...</p>
+            <p class="ka-muted ka-body-sm">Cargando análisis...</p>
           </div>
         </div>
-
         <div class="card">
           <h2>Sentimiento de las noticias (Machine Learning)</h2>
           <p class="chart-hint">Titulares recientes clasificados por un modelo TF-IDF + Regresión Logística entrenado con 12 mil+ noticias financieras. Determina si el ambiente mediático acompaña o presiona.</p>
@@ -137,13 +195,12 @@
 
     <!-- ============ VISTA 3 · PRESCRIPTIVA ============ -->
     <section class="tab-panel" data-panel="prescriptiva">
-      <div class="view-intro">
-        <span class="view-chip chip-pres">Prescriptiva</span>
+      <div class="ka-view-intro">
+        <span class="ka-view-chip pres">Prescriptiva</span>
         <p><b>¿Qué debo hacer?</b> Señal de acción con niveles de riesgo, recomendación de la IA, verificación de reglas y evidencia histórica.</p>
       </div>
 
       <section class="kpis" id="kpisPres"></section>
-
       <div class="card signal-hero" id="signalHero"></div>
 
       <div class="grid">
@@ -165,9 +222,8 @@
         <div class="card">
           <h2>Dimensionamiento de la posición</h2>
           <p class="chart-hint">Cuántas acciones comprar para arriesgar solo un porcentaje pequeño del capital según la distancia al Stop Loss.</p>
-          <label style="display:block; margin-bottom:8px;">Capital disponible (S/)
-            <input id="capitalInput" type="number" min="0" value="10000" style="width: 140px;" />
-          </label>
+          <label class="ka-control-label" style="display:block; margin-bottom:8px;">Capital disponible (S/)</label>
+          <input class="ka-input" id="capitalInput" type="number" min="0" value="10000" style="width: 140px;" />
           <div id="positionBox"></div>
         </div>
       </div>
@@ -175,7 +231,7 @@
       <section class="card">
         <h2>Explicación en lenguaje humano</h2>
         <div id="narracionBox">
-          <p style="color: var(--muted);">Cargando interpretación...</p>
+          <p class="ka-muted ka-body-sm">Cargando interpretación...</p>
         </div>
       </section>
 
@@ -183,7 +239,7 @@
         <h2>Simulación histórica: ¿cómo le fue a la estrategia?</h2>
         <p class="chart-hint">Reproduce la estrategia con datos pasados (70% entrenamiento / 30% prueba, fricción 0.1% por operación) y la compara contra 'mantenerse sin operar'.</p>
         <div class="metrics" id="btMetrics"></div>
-        <div class="chart-box"><canvas id="chartBacktest"></canvas></div>
+        <div class="chart-box chart-h-lg"><canvas id="chartBacktest"></canvas></div>
         <div class="advice" id="adviceBacktest" style="margin-top: 14px;"></div>
       </section>
 
@@ -193,51 +249,86 @@
       </div>
     </section>
 
-    <footer>
-      <p>Prototipo académico para fines de investigación. No constituye asesoría de inversión personalizada,
-      no ejecuta órdenes con dinero real y las señales son simulaciones de apoyo al análisis humano.</p>
+    <!-- ============ VISTA 4 · SCREENER ============ -->
+    <section class="tab-panel" data-panel="screener">
+      <div class="ka-view-intro">
+        <span class="ka-view-chip screen">Screener</span>
+        <p><b>¿Qué activo conviene mirar?</b> Radiografía comparada del universo fijo de 3 empresas, ordenada por la magnitud de su movimiento y con su señal cuantitativa.</p>
+      </div>
 
-      <details class="footer-box">
-        <summary>Metodología y documentación TDSP</summary>
+      <div class="ka-bar ka-gap-sm ka-wrap" style="margin-bottom: var(--ka-space-md);">
+        <span class="ka-control-label">Ordenar por</span>
+        <div class="ka-seg" id="screenerSort" role="group" aria-label="Criterio de orden">
+          <button type="button" data-sort="change_pct" aria-pressed="true">Variación</button>
+          <button type="button" data-sort="rsi14">RSI</button>
+          <button type="button" data-sort="macd_hist">MACD</button>
+          <button type="button" data-sort="volume">Volumen</button>
+        </div>
+        <div class="ka-spacer"></div>
+        <div class="ka-row ka-gap-sm">
+          <span class="ka-dot ka-dot-lg" id="screenerUpDot"></span>
+          <span class="ka-label-sm ka-muted" id="screenerUp"></span>
+          <span class="ka-dot ka-dot-lg ka-dot-off" id="screenerDownDot"></span>
+          <span class="ka-label-sm ka-muted" id="screenerDown"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap" id="screenerTable"></div>
+      </div>
+    </section>
+
+    <!-- ============ VISTA 5 · METODOLOGIA TDSP ============ -->
+    <section class="tab-panel" data-panel="metodologia">
+      <div class="ka-view-intro">
+        <span class="ka-view-chip tdsp">Metodología TDSP</span>
+        <p><b>¿Cómo está construido esto?</b> Ciclo de vida del dato, pipeline analítico, cadena de valor, herramientas, alcance y límites éticos.</p>
+      </div>
+
+      <div class="grid">
         <div class="card">
-          <h2>Metodología TDSP · Fases del ciclo de vida</h2>
+          <h2>Fases del ciclo de vida · TDSP</h2>
           <div id="tdspStepper" class="stepper"></div>
         </div>
         <div class="card">
-          <h2>Pipeline analítico · Paso a paso del sistema</h2>
+          <h2>Pipeline analítico · paso a paso</h2>
           <div id="pipelineFlow" class="pipeline-flow"></div>
         </div>
         <div class="card">
           <h2>Cadena de valor analítica</h2>
           <div id="chainFlow" class="chain-flow"></div>
         </div>
-        <div class="grid two-col">
-          <div class="card">
-            <h2>Las 3Vs del Big Data</h2>
-            <div id="vsBox" class="vs-box"></div>
-          </div>
-          <div class="card">
-            <h2>Herramientas y presupuesto</h2>
-            <div id="toolsBox" class="tools-list"></div>
-          </div>
-        </div>
         <div class="card">
           <h2>Alcance y límites éticos</h2>
           <p id="ethicBox" class="hint"></p>
         </div>
-      </details>
-
-      <details class="footer-box">
-        <summary>Diccionario para comenzar en Swing Trading</summary>
         <div class="card">
-          <h2>Conceptos clave explicados en lenguaje simple</h2>
-          <div id="glossaryBox" class="glossary"></div>
+          <h2>Las 3Vs del Big Data</h2>
+          <div id="vsBox" class="vs-box"></div>
         </div>
-      </details>
-    </footer>
-  </div>
+        <div class="card">
+          <h2>Herramientas y presupuesto</h2>
+          <div id="toolsBox" class="tools-list"></div>
+        </div>
+      </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+      <div class="card" style="margin-top: var(--ka-gutter);">
+        <h2>Diccionario para comenzar en Swing Trading</h2>
+        <div id="glossaryBox" class="glossary"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="ka-foot">
+    <p>
+      Prototipo académico para fines de investigación. No constituye asesoría de inversión personalizada,
+      no ejecuta órdenes con dinero real y las señales son simulaciones de apoyo al análisis humano.
+      <a class="ka-doc-link" href="/docs">Documentación de la API</a>
+    </p>
+  </footer>
+
+  <script src="/vendor/chart.umd.min.js"></script>
   <script src="/app.js"></script>
+  <script src="/js/router.js"></script>
 </body>
 </html>

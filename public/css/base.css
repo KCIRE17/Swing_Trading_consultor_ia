@@ -1,0 +1,697 @@
+/* =====================================================================
+ * Kinetic Alpha - base
+ * Tokens: css/tokens.css (generado desde swing_trading_views)
+ * Todos los valores salen del tailwind.config de los mockups, no del DESIGN.md.
+ * ===================================================================== */
+
+/* ---------- 1. Tipografias autoalojadas ---------- */
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('/fonts/plus-jakarta-sans-var-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122,
+    U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('/fonts/plus-jakarta-sans-var-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+    U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F,
+    U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-500-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122,
+    U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-500-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+    U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F,
+    U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+
+/* ---------- 2. Reset ---------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--ka-surface);
+  color: var(--ka-on-surface);
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--ka-surface-container-lowest);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ka-surface-container-highest);
+  border-radius: var(--ka-radius-full);
+  border: 2px solid var(--ka-surface-container-lowest);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ka-outline);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ka-secondary);
+  outline-offset: 2px;
+}
+
+/* ---------- 3. Tipografia ---------- */
+
+.ka-h1 {
+  font-size: var(--ka-text-headline-xl-size);
+  line-height: var(--ka-text-headline-xl-lh);
+  font-weight: var(--ka-text-headline-xl-fw);
+  letter-spacing: var(--ka-text-headline-xl-ls);
+}
+.ka-h2 {
+  font-size: var(--ka-text-headline-lg-size);
+  line-height: var(--ka-text-headline-lg-lh);
+  font-weight: var(--ka-text-headline-lg-fw);
+  letter-spacing: var(--ka-text-headline-lg-ls);
+}
+.ka-h3 {
+  font-size: var(--ka-text-headline-md-size);
+  line-height: var(--ka-text-headline-md-lh);
+  font-weight: var(--ka-text-headline-md-fw);
+  letter-spacing: var(--ka-text-headline-md-ls);
+}
+.ka-body {
+  font-size: var(--ka-text-body-lg-size);
+  line-height: var(--ka-text-body-lg-lh);
+}
+.ka-body-md {
+  font-size: var(--ka-text-body-md-size);
+  line-height: var(--ka-text-body-md-lh);
+}
+.ka-body-sm {
+  font-size: var(--ka-text-body-sm-size);
+  line-height: var(--ka-text-body-sm-lh);
+}
+
+/* etiqueta monoespaciada: tickers, precios, deltas, coordenadas */
+.ka-label-lg,
+.ka-label-md,
+.ka-label-sm {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-weight: 500;
+}
+.ka-label-lg {
+  font-size: var(--ka-text-label-lg-size);
+  line-height: var(--ka-text-label-lg-lh);
+  letter-spacing: var(--ka-text-label-lg-ls);
+}
+.ka-label-md {
+  font-size: var(--ka-text-label-md-size);
+  line-height: var(--ka-text-label-md-lh);
+  letter-spacing: var(--ka-text-label-md-ls);
+}
+.ka-label-sm {
+  font-size: var(--ka-text-label-sm-size);
+  line-height: var(--ka-text-label-sm-lh);
+  letter-spacing: var(--ka-text-label-sm-ls);
+}
+
+.ka-upper {
+  text-transform: uppercase;
+}
+.ka-muted {
+  color: var(--ka-on-surface-variant);
+}
+.ka-dim {
+  color: var(--ka-outline);
+}
+
+/* cifras tabulares: no se Davenport el layout cuando un precio se actualiza */
+.ka-num {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  font-weight: 500;
+}
+
+/* ---------- 4. Iconos (sprite SVG) ---------- */
+
+.ka-i {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  flex-shrink: 0;
+  vertical-align: -0.125em;
+}
+.ka-i-16 {
+  font-size: 16px;
+}
+.ka-i-18 {
+  font-size: 18px;
+}
+.ka-i-20 {
+  font-size: 20px;
+}
+.ka-i-24 {
+  font-size: 24px;
+}
+.ka-i-32 {
+  font-size: 32px;
+}
+
+/* ---------- 5. Superficies y elevacion ---------- */
+
+.ka-elev-0 {
+  background: var(--ka-surface-container-lowest);
+}
+.ka-elev-1 {
+  background: var(--ka-surface-container-low);
+  border: 1px solid var(--ka-border-structural);
+}
+.ka-elev-2 {
+  background: var(--ka-surface-container);
+  border: 1px solid var(--ka-border-structural);
+  box-shadow: var(--ka-shadow-flyout);
+}
+
+/* El mockup monta cada grafico sobre el nivel 0 (#060e20) dentro de un
+   panel de nivel 1. Sin esto el canvas hereda el color de la tarjeta y la
+   rampa de elevacion del render no coincide con la referencia. */
+.chart-box {
+  background: var(--ka-surface-container-lowest);
+  border-radius: var(--ka-radius-lg);
+  padding: var(--ka-space-sm);
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--ka-border-hairline);
+}
+.chart-box canvas {
+  position: relative;
+  z-index: 1;
+}
+
+/* Alturas tomadas del mockup: h-80 para el grafico principal y h-44 para los
+   indicadores secundarios. Sin esto, con maintainAspectRatio:false, el canvas
+   se aplasta porque la caja que lo contiene no tiene altura propia. */
+.chart-box.chart-h-lg {
+  height: 20rem; /* h-80 */
+}
+.chart-box.chart-h-sm {
+  height: 11rem; /* h-44 */
+}
+
+.ka-panel {
+  background: var(--ka-surface-container-low);
+  border: 1px solid var(--ka-border-structural);
+  border-radius: var(--ka-radius-lg);
+}
+.ka-panel-inset {
+  background: var(--ka-surface-container);
+  border: 1px solid var(--ka-border-structural);
+  border-radius: var(--ka-radius-lg);
+}
+
+.ka-divider {
+  height: 1px;
+  background: var(--ka-border-hairline);
+  border: 0;
+  margin: 0;
+}
+
+/* ---------- 6. Chips de senal ---------- */
+/* fondo 10% + borde solido del color funcional, bead de 6px */
+
+.ka-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: var(--ka-radius-full);
+  border: 1px solid;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: var(--ka-text-label-md-size);
+  line-height: var(--ka-text-label-md-lh);
+  letter-spacing: var(--ka-text-label-md-ls);
+  font-weight: 500;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.ka-chip::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: var(--ka-radius-full);
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.ka-chip-buy {
+  color: var(--ka-primary);
+  background: color-mix(in srgb, var(--ka-primary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--ka-primary) 30%, transparent);
+}
+.ka-chip-hold {
+  color: var(--ka-tertiary);
+  background: color-mix(in srgb, var(--ka-tertiary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--ka-tertiary) 30%, transparent);
+}
+.ka-chip-sell {
+  color: var(--ka-on-error-container);
+  background: var(--ka-error-container);
+  border-color: color-mix(in srgb, var(--ka-error) 45%, transparent);
+}
+.ka-chip-ai {
+  color: var(--ka-secondary);
+  background: color-mix(in srgb, var(--ka-secondary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--ka-secondary) 30%, transparent);
+}
+.ka-chip-flat {
+  color: var(--ka-on-surface-variant);
+  background: var(--ka-surface-container-high);
+  border-color: var(--ka-border-structural);
+}
+.ka-chip-flat::before {
+  display: none;
+}
+
+/* ---------- 7. Aura de decision ---------- */
+/* gradiente de 1px en el borde superior + wash al 4%, segun el estado */
+
+.ka-signal-card {
+  position: relative;
+  overflow: hidden;
+}
+.ka-signal-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--aura, var(--ka-primary)) 35%,
+    var(--aura, var(--ka-primary)) 65%,
+    transparent
+  );
+  opacity: 0.55;
+}
+.ka-signal-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--aura, var(--ka-primary)) 0%, transparent 55%);
+  opacity: 0.04;
+  pointer-events: none;
+}
+.ka-signal-card > * {
+  position: relative;
+  z-index: 1;
+}
+.ka-aura-buy {
+  --aura: var(--ka-primary);
+}
+.ka-aura-hold {
+  --aura: var(--ka-tertiary);
+}
+.ka-aura-sell {
+  --aura: var(--ka-error);
+}
+
+/* ---------- 8. Tablas cuantitativas ---------- */
+/* filas de 44px, divisores hairline, hover #152138, numeros a la derecha */
+
+.ka-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ka-text-body-md-size);
+}
+.ka-table thead th {
+  text-align: left;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: var(--ka-text-label-sm-size);
+  letter-spacing: var(--ka-text-label-sm-ls);
+  text-transform: uppercase;
+  color: var(--ka-on-surface-variant);
+  font-weight: 500;
+  padding: 0 var(--ka-space-sm);
+  height: 36px;
+  border-bottom: 1px solid var(--ka-border-hairline);
+  white-space: nowrap;
+}
+.ka-table tbody td {
+  padding: 0 var(--ka-space-sm);
+  height: var(--ka-row-height);
+  border-bottom: 1px solid var(--ka-border-hairline);
+  white-space: nowrap;
+}
+.ka-table tbody tr {
+  transition: background 120ms ease;
+}
+.ka-table tbody tr:hover {
+  background: var(--ka-row-hover);
+}
+.ka-table .num {
+  text-align: right;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  font-weight: 500;
+}
+.ka-table th.num {
+  text-align: right;
+}
+
+/* ---------- 9. Controles ---------- */
+/* el DESIGN.md prohibe botones pill: se usan radios cortos */
+
+.ka-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ka-space-xs);
+  padding: 8px var(--ka-space-md);
+  border-radius: var(--ka-radius-lg);
+  border: 1px solid var(--ka-border-input);
+  background: var(--ka-surface-variant);
+  color: var(--ka-on-surface-variant);
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: var(--ka-text-label-md-size);
+  line-height: var(--ka-text-label-md-lh);
+  letter-spacing: var(--ka-text-label-md-ls);
+  font-weight: 500;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+}
+.ka-btn:hover {
+  background: var(--ka-surface-container-highest);
+  color: var(--ka-on-surface);
+}
+.ka-btn-primary {
+  background: var(--ka-primary);
+  border-color: var(--ka-primary);
+  color: var(--ka-on-primary);
+}
+.ka-btn-primary:hover {
+  /* brillo interno +8%, sin sombra que desplace el layout */
+  background: color-mix(in srgb, var(--ka-primary) 92%, white);
+  color: var(--ka-on-primary);
+}
+.ka-btn-sell {
+  background: var(--ka-error-container);
+  border-color: var(--ka-error);
+  color: var(--ka-on-error-container);
+}
+.ka-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ka-input,
+.ka-select {
+  background: var(--ka-surface-container);
+  border: 1px solid var(--ka-border-input);
+  border-radius: var(--ka-radius-lg);
+  color: var(--ka-on-surface);
+  padding: 5px var(--ka-space-sm);
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: var(--ka-text-label-md-size);
+  line-height: var(--ka-text-label-md-lh);
+  min-width: 0;
+}
+.ka-input:focus,
+.ka-select:focus {
+  outline: none;
+  border-color: var(--ka-secondary);
+  box-shadow: var(--ka-focus-ring);
+}
+.ka-select {
+  cursor: pointer;
+}
+
+/* grupo segmentado (rangos, toggles) */
+.ka-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--ka-surface-container);
+  border-radius: var(--ka-radius-lg);
+}
+.ka-seg button {
+  padding: 2px var(--ka-space-xs);
+  border: 0;
+  border-radius: var(--ka-radius);
+  background: transparent;
+  color: var(--ka-on-surface-variant);
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: var(--ka-text-label-sm-size);
+  line-height: var(--ka-text-label-sm-lh);
+  letter-spacing: var(--ka-text-label-sm-ls);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+.ka-seg button:hover {
+  color: var(--ka-on-surface);
+}
+.ka-seg button[aria-pressed='true'] {
+  background: var(--ka-surface-container-highest);
+  color: var(--ka-primary);
+  font-weight: 500;
+}
+
+/* ---------- 10. Indicadores de estado ---------- */
+
+.ka-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--ka-radius-full);
+  flex-shrink: 0;
+}
+.ka-dot-lg {
+  width: 10px;
+  height: 10px;
+}
+.ka-dot-ok {
+  background: var(--ka-primary);
+}
+.ka-dot-ai {
+  background: var(--ka-secondary-container);
+}
+.ka-dot-warn {
+  background: var(--ka-tertiary);
+}
+.ka-dot-off {
+  background: var(--ka-error);
+}
+.ka-pulse {
+  animation: ka-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes ka-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.ka-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--ka-radius-full);
+  background: var(--ka-primary);
+  color: var(--ka-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ---------- 11. Etiquetas metricas ---------- */
+
+.ka-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ka-stat-label {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: var(--ka-text-label-sm-size);
+  line-height: var(--ka-text-label-sm-lh);
+  letter-spacing: var(--ka-text-label-sm-ls);
+  font-weight: 500;
+  text-transform: uppercase;
+  color: var(--ka-on-surface-variant);
+}
+.ka-stat-value {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  font-weight: 500;
+  font-size: var(--ka-text-headline-md-size);
+  line-height: var(--ka-text-headline-md-lh);
+  color: var(--ka-on-surface);
+}
+
+.ka-v-buy {
+  color: var(--ka-primary);
+}
+.ka-v-hold {
+  color: var(--ka-tertiary);
+}
+.ka-v-sell {
+  color: var(--ka-error);
+}
+.ka-v-ai {
+  color: var(--ka-secondary);
+}
+
+/* ---------- 12. Layout ---------- */
+
+.ka-row {
+  display: flex;
+  align-items: center;
+}
+.ka-wrap {
+  flex-wrap: wrap;
+}
+.ka-gap-xs {
+  gap: var(--ka-space-xs);
+}
+.ka-gap-sm {
+  gap: var(--ka-space-sm);
+}
+.ka-gap-md {
+  gap: var(--ka-space-md);
+}
+.ka-gap-lg {
+  gap: var(--ka-space-lg);
+}
+.ka-spacer {
+  flex: 1 1 auto;
+}
+
+.ka-grid {
+  display: grid;
+  gap: var(--ka-gutter);
+}
+
+/* ---------- 13. Estados de carga y vacio ---------- */
+
+.ka-skel {
+  background: linear-gradient(
+    90deg,
+    var(--ka-surface-container) 0%,
+    var(--ka-surface-container-high) 50%,
+    var(--ka-surface-container) 100%
+  );
+  background-size: 200% 100%;
+  animation: ka-shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--ka-radius);
+}
+@keyframes ka-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.ka-empty {
+  padding: var(--ka-space-xl) var(--ka-space-md);
+  text-align: center;
+  color: var(--ka-on-surface-variant);
+  border: 1px dashed var(--ka-outline-variant);
+  border-radius: var(--ka-radius-lg);
+}
+.ka-empty .ka-i {
+  margin: 0 auto var(--ka-space-sm);
+  color: var(--ka-outline);
+  font-size: 32px;
+}
+
+.ka-err {
+  border-left: 3px solid var(--ka-error);
+  background: color-mix(in srgb, var(--ka-error) 8%, transparent);
+  color: var(--ka-on-error-container);
+  padding: var(--ka-space-sm) var(--ka-space-md);
+  border-radius: var(--ka-radius);
+  font-size: var(--ka-text-body-md-size);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

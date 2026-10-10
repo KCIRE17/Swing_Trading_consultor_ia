@@ -1,0 +1,26 @@
+/* =====================================================================
+ * Kinetic Alpha - puente de compatibilidad
+ *
+ * style.css (legacy) usa 11 variables con nombres propios. En vez de
+ * reescribir sus 1132 lineas, se remapean a los tokens Kinetic para que
+ * los componentes existentes hereden la paleta nueva de una.
+ *
+ * Este bloque debe cargarse DESPUES de style.css para ganar la cascada.
+ * ===================================================================== */
+
+:root {
+  --bg: var(--ka-surface);
+  --panel: var(--ka-surface-container-low);
+  --panel-2: var(--ka-surface-container);
+  --border: var(--ka-surface-variant);
+  --text: var(--ka-on-surface);
+  --muted: var(--ka-on-surface-variant);
+
+  /* senal de mercado */
+  --up: var(--ka-primary);
+  --buy: var(--ka-primary);
+  --down: var(--ka-error);
+  --sell: var(--ka-error);
+  --hold: var(--ka-tertiary);
+  --accent: var(--ka-secondary);
+}

@@ -17,6 +17,8 @@ function byId(id) {
 }
 
 const charts = {};
+// router.js redimensiona los charts al cambiar de ruta
+window.__kaCharts = charts;
 const chartDefs = {
   price: {
     canvas: "chartPrice",
@@ -327,20 +329,20 @@ function sentimientoLabel(code) {
 
 /* ---------------- Screener (selección de empresa) ---------------- */
 
+const DEFAULT_TICKER = "NVDA";
+
 const COMPANIES = [
-  { t: "SPY", n: "S&P 500 ETN" },
-  { t: "AAPL", n: "Apple" },
-  { t: "NVDA", n: "NVIDIA" },
-  { t: "MSFT", n: "Microsoft" },
-  { t: "AMZN", n: "Amazon" },
-  { t: "TSLA", n: "Tesla" },
-  { t: "GOOGL", n: "Alphabet (Google)" },
-  { t: "META", n: "Meta" },
+  { t: "NVDA", n: "NVIDIA Corp." },
+  { t: "AAPL", n: "Apple Inc." },
+  { t: "MSFT", n: "Microsoft Corp." },
 ];
 const SCREENER = COMPANIES;
 
 function fillCompanySelects() {
-  const options = COMPANIES.map((c) => `<option value="${c.t}">${c.n} (${c.t})</option>`).join("");
+  const options = COMPANIES.map(
+    (c) =>
+      `<option value="${c.t}"${c.t === DEFAULT_TICKER ? " selected" : ""}>${c.t} · ${esc(c.n)}</option>`
+  ).join("");
   const top = byId("ticker");
   if (top) top.innerHTML = options;
 }
@@ -1004,7 +1006,7 @@ function renderBacktest(bt) {
 /* ---------------- Análisis principal ---------------- */
 
 async function run() {
-  const ticker = byId("ticker")?.value.trim().toUpperCase() || "SPY";
+  const ticker = byId("ticker")?.value.trim().toUpperCase() || DEFAULT_TICKER;
   const period = byId("period")?.value || "6mo";
   const btn = byId("runBtn");
   const t = encodeURIComponent(ticker);
@@ -1038,7 +1040,11 @@ async function run() {
     renderPrescriptiva(sig, bt, ind, fore);
     renderCompare(compares, ticker);
 
-    document.querySelector("header h1 .light").textContent = `· ${sig.nombre || ticker}`;
+    // El shell nuevo no tiene header h1; las rutas 4 y 5 (router.js) se
+    // alimentan de este payload en vez de volver a pedir la API.
+    window.__kaData = { ticker, period, ind, screener: screenerData, sig, fore, news: newsData, bt, compares };
+    window.dispatchEvent(new CustomEvent("ka:data", { detail: window.__kaData }));
+
     setStatus(`Listo · ${ticker} · ${new Date().toLocaleTimeString()}`);
   } catch (err) {
     showError(err.message);

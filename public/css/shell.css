@@ -1,0 +1,348 @@
+/* =====================================================================
+ * Kinetic Alpha - shell
+ * Header fijo + navegacion de 5 rutas, replicando la estructura del
+ * mockup: dos filas, la primera con identidad/controles/status y la
+ * segunda con la navegacion.
+ * ===================================================================== */
+
+.ka-topbar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--ka-surface) 90%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
+  border-top: 1px solid color-mix(in srgb, var(--ka-surface-variant) 30%, transparent);
+}
+
+.ka-topbar-inner {
+  width: 100%;
+  padding: var(--ka-space-sm) var(--ka-gutter-desktop);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ka-space-sm);
+}
+
+/* --- fila 1 --- */
+
+.ka-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ka-space-md);
+  flex-wrap: wrap;
+}
+
+.ka-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--ka-space-lg);
+  flex-wrap: wrap;
+}
+
+.ka-brand-id {
+  display: flex;
+  align-items: center;
+  gap: var(--ka-space-sm);
+  min-width: 0;
+}
+
+.ka-brand-mark {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.ka-brand-name {
+  font-size: var(--ka-text-headline-md-size);
+  line-height: var(--ka-text-headline-md-lh);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ka-on-surface);
+  white-space: nowrap;
+}
+
+/* etiqueta de alcance del prototipo */
+.ka-tag {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: var(--ka-text-label-sm-size);
+  line-height: var(--ka-text-label-sm-lh);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  background: var(--ka-surface-container-high);
+  color: var(--ka-primary);
+  padding: 2px var(--ka-space-xs);
+  border-radius: var(--ka-radius);
+  white-space: nowrap;
+}
+
+/* bloque de control activo + rango */
+.ka-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--ka-space-md);
+  background: var(--ka-surface-container-low);
+  padding: 6px var(--ka-space-md);
+  border-radius: var(--ka-radius-lg);
+  flex-wrap: wrap;
+}
+
+.ka-control {
+  display: flex;
+  align-items: center;
+  gap: var(--ka-space-xs);
+}
+
+.ka-control-label {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: var(--ka-text-label-sm-size);
+  line-height: var(--ka-text-label-sm-lh);
+  letter-spacing: var(--ka-text-label-sm-ls);
+  text-transform: uppercase;
+  color: var(--ka-on-surface-variant);
+  font-weight: 500;
+}
+
+/* --- panel de estado (salud del sistema) --- */
+
+.ka-health {
+  display: flex;
+  align-items: center;
+  gap: var(--ka-space-md);
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: var(--ka-text-label-sm-size);
+  line-height: var(--ka-text-label-sm-lh);
+  letter-spacing: var(--ka-text-label-sm-ls);
+  background: var(--ka-surface-container-low);
+  padding: 6px var(--ka-space-md);
+  border-radius: var(--ka-radius-lg);
+}
+
+.ka-health-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.ka-health-k {
+  color: var(--ka-on-surface-variant);
+}
+
+.ka-health-v {
+  font-weight: 500;
+  color: var(--ka-on-surface);
+}
+.ka-health-v.ka-v-buy {
+  color: var(--ka-primary);
+}
+.ka-health-v.ka-v-ai {
+  color: var(--ka-secondary);
+}
+.ka-health-v.ka-v-sell {
+  color: var(--ka-error);
+}
+
+/* --- fila 2: navegacion --- */
+
+.ka-navrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ka-space-md);
+  flex-wrap: wrap;
+  padding-top: var(--ka-space-xs);
+  border-top: 1px solid color-mix(in srgb, var(--ka-surface-variant) 30%, transparent);
+}
+
+.ka-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--ka-space-xs);
+  flex-wrap: wrap;
+}
+
+.ka-nav-link {
+  padding: 6px var(--ka-space-md);
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: var(--ka-text-label-md-size);
+  line-height: var(--ka-text-label-md-lh);
+  letter-spacing: var(--ka-text-label-md-ls);
+  color: var(--ka-on-surface-variant);
+  border-radius: var(--ka-radius);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+.ka-nav-link:hover {
+  background: var(--ka-surface-container-high);
+  color: var(--ka-on-surface);
+}
+.ka-nav-link[aria-current='page'] {
+  background: var(--ka-surface-container-highest);
+  color: var(--ka-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.ka-horizon {
+  display: flex;
+  align-items: center;
+  gap: var(--ka-space-xs);
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: var(--ka-text-label-sm-size);
+  line-height: var(--ka-text-label-sm-lh);
+  letter-spacing: var(--ka-text-label-sm-ls);
+  color: var(--ka-on-surface-variant);
+  background: var(--ka-surface-container-low);
+  padding: var(--ka-space-sm);
+  border-radius: var(--ka-radius);
+}
+.ka-horizon .ka-i {
+  color: var(--ka-tertiary);
+  font-size: 16px;
+}
+
+/* --- cuerpo --- */
+
+.ka-main {
+  width: 100%;
+  padding-top: 132px;
+  padding-left: var(--ka-gutter-desktop);
+  padding-right: var(--ka-gutter-desktop);
+  padding-bottom: var(--ka-margin-desktop);
+  min-height: 100vh;
+}
+
+.ka-foot {
+  padding: var(--ka-space-lg) var(--ka-gutter-desktop) var(--ka-space-xl);
+  border-top: 1px solid var(--ka-border-hairline);
+  color: var(--ka-on-surface-variant);
+  font-size: var(--ka-text-body-sm-size);
+  line-height: var(--ka-text-body-sm-lh);
+  max-width: 110ch;
+}
+
+.ka-doc-link {
+  color: var(--ka-primary);
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: var(--ka-text-label-sm-size);
+  text-transform: uppercase;
+  letter-spacing: var(--ka-text-label-sm-ls);
+  border-bottom: 1px solid color-mix(in srgb, var(--ka-primary) 40%, transparent);
+}
+.ka-doc-link:hover {
+  border-bottom-color: var(--ka-primary);
+}
+
+/* --- paneles de vista --- */
+
+.tab-panel {
+  display: none;
+}
+.tab-panel.active {
+  display: block;
+  animation: ka-fade 160ms ease;
+}
+@keyframes ka-fade {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* el encabezado de cada vista: pregunta que responde */
+.ka-view-intro {
+  display: flex;
+  align-items: center;
+  gap: var(--ka-space-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--ka-space-md);
+}
+.ka-view-intro p {
+  margin: 0;
+  color: var(--ka-on-surface-variant);
+  font-size: var(--ka-text-body-md-size);
+  line-height: var(--ka-text-body-md-lh);
+  max-width: 92ch;
+}
+.ka-view-intro b {
+  color: var(--ka-on-surface);
+  font-weight: 600;
+}
+.ka-view-chip {
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  font-size: var(--ka-text-label-sm-size);
+  line-height: var(--ka-text-label-sm-lh);
+  letter-spacing: var(--ka-text-label-sm-ls);
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 4px var(--ka-space-sm);
+  border-radius: var(--ka-radius);
+  border: 1px solid;
+  white-space: nowrap;
+}
+.ka-view-chip.descr {
+  color: var(--ka-primary);
+  background: color-mix(in srgb, var(--ka-primary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--ka-primary) 30%, transparent);
+}
+.ka-view-chip.pred {
+  color: var(--ka-secondary);
+  background: color-mix(in srgb, var(--ka-secondary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--ka-secondary) 30%, transparent);
+}
+.ka-view-chip.pres {
+  color: var(--ka-tertiary);
+  background: color-mix(in srgb, var(--ka-tertiary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--ka-tertiary) 30%, transparent);
+}
+.ka-view-chip.screen {
+  color: var(--ka-on-surface-variant);
+  background: var(--ka-surface-container-high);
+  border-color: var(--ka-border-structural);
+}
+.ka-view-chip.tdsp {
+  color: var(--ka-on-surface);
+  background: var(--ka-surface-container-high);
+  border-color: var(--ka-outline-variant);
+}
+
+/* --- responsive --- */
+
+@media (max-width: 1199px) {
+  .ka-health {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .ka-topbar-inner {
+    padding: var(--ka-space-sm) var(--ka-gutter);
+  }
+  .ka-main {
+    padding-top: 168px;
+    padding-left: var(--ka-gutter);
+    padding-right: var(--ka-gutter);
+  }
+  .ka-brand-name {
+    font-size: var(--ka-text-body-lg-size);
+  }
+  .ka-nav {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  .ka-horizon {
+    display: none;
+  }
+}
