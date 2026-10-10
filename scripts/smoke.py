@@ -104,6 +104,29 @@ def run_forecast_roundtrip():
         check("db: forecast round-trip (jsonb a python)", False, repr(exc))
 
 
+def run_ohlcv_roundtrip():
+    try:
+        row = {
+            "date": "2020-01-02",
+            "open": 1.0, "high": 2.0, "low": 0.5, "close": 1.5, "volume": 100,
+            "sma20": 1.4, "sma50": 1.3, "rsi14": 50.0,
+            "macd": 0.1, "macd_signal": 0.05, "macd_hist": 0.05, "atr14": 0.2,
+        }
+        db.upsert_ohlcv("SMOKE_TEST", [row])
+        frame = db.read_ohlcv("SMOKE_TEST", 5)
+        ok = frame is not None and float(frame.iloc[0]["Close"]) == 1.5
+        check("db: upsert/read round-trip OHLCV (mapeo de columnas)", ok,
+              "close devuelto" if frame is None else str(frame.iloc[0]["Close"]))
+    except Exception as exc:
+        check("db: upsert/read round-trip OHLCV (mapeo de columnas)", False, repr(exc))
+    finally:
+        try:
+            with db.connect() as conn:
+                conn.execute("DELETE FROM ohlcv WHERE ticker = %s", ("SMOKE_TEST",))
+        except Exception:
+            pass
+
+
 def run_backtest(ticker="NVDA"):
     start = time.time()
     frame = fetch_ohlcv(ticker, "1y")
@@ -133,6 +156,7 @@ def main():
         except Exception as exc:
             check("db: conexion y esquema Supabase", False, repr(exc))
         run_forecast_roundtrip()
+        run_ohlcv_roundtrip()
     else:
         check("db: DATABASE_URL (Sin base local)", False, "no configurada; el fallback usa yfinance en vivo")
 
