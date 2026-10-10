@@ -154,7 +154,7 @@
       <div class="flow">
         <div class="node yellow"><span class="ic">🐙</span><b>Git push</b><small>tu única acción</small></div>
         <div class="arrow">→</div>
-        <div class="node primary"><span class="ic">⚙️</span><b>GitHub Actions</b><small>cron 22:00 UTC + dispatch + push<br/>ETL, entrenamiento ML, smoke</small></div>
+        <div class="node primary"><span class="ic">⚙️</span><b>GitHub Actions</b><small>cron 23:00 UTC + dispatch + push<br/>ETL, entrenamiento ML, smoke</small></div>
         <div class="arrow">→</div>
         <div class="node cyan"><span class="ic">📈</span><b>Yahoo Finance</b><small>OHLCV + titulares (noticias)</small></div>
         <div class="arrow">→</div>
@@ -175,7 +175,7 @@
       <div class="box github">
         <div class="box-label">▪ GitHub Actions — nube</div>
         <div class="flow v">
-          <div class="node yellow"><b>Disparadores</b><small>cron 22:00 UTC · workflow_dispatch · push a main</small></div>
+          <div class="node yellow"><b>Disparadores</b><small>cron 23:00 UTC · workflow_dispatch · push a main</small></div>
           <div class="arrow down">▼</div>
           <div class="node"><b>Setup</b><small>checkout · python 3.12 · pip install -e .</small></div>
           <div class="arrow down">▼</div>
@@ -341,7 +341,7 @@
     <div class="card">
       <div style="font-family:'Cascadia Code',Consolas,monospace; font-size:13px; color:var(--muted); white-space:pre; overflow-x:auto;">
  git push → GitHub Actions (ETL + ML) → Supabase ⇄ Vercel (FastAPI + Gemini) → 3 vistas
-     ↑__________ cron 22:00 UTC __________↑            todo en la nube · nada local
+     ↑__________ cron 23:00 UTC __________↑            todo en la nube · nada local
       </div>
       <div class="legend" style="margin-top: 14px;">
         <span><span class="dot" style="background:var(--accent)"></span> Plataforma/Vercel</span>

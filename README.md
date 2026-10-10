@@ -22,7 +22,7 @@ Actions (ETL + entrenamiento ML)** y **Vercel (API + dashboard)**.
 - **Sentimiento de noticias con Machine Learning**: clasificador **TF-IDF + Regresión Logística** reentrenado en cada corrida del ETL con \(12\,000+\) titulares financieros.
 - **Inferencia cualitativa con Google Gemini Flash** (solo texto): devuelve `prediccion` (ALCISTA/NEUTRAL/BAJISTA), `probabilidad`, `nivel_riesgo`, `recomendacion`, `conclusion_cualitativa` y `justificacion_tecnica`. Sin clave, degrada a reglas cuantitativas.
 - **Motor de señales**: BUY/HOLD/SELL con Stop-Loss (`cierre - 1.5·ATR`) y Take-Profit (`cierre + 3·ATR`), alimentado por la confluencia técnica + recomendación de la IA + tono de las noticias.
-- **Backtesting** con partición 70/15/15, fricción del 0.1%, Win Rate, Maximum Drawdown, Sharpe y comparación contra Buy & Hold.
+- **Backtesting** con partición 70/30, fricción del 0.1%, Win Rate, Maximum Drawdown, Sharpe y comparación contra Buy & Hold.
 - **Screener de mercado**: 8 empresas analizadas con señal por activo.
 - **Persistencia en Supabase**: tablas `ohlcv`, `news`, `forecast_snapshots` e `inference_log`.
 
@@ -55,7 +55,7 @@ docs/arquitectura.html        # Diagrama de arquitectura (abrir en navegador)
 
 ## Arquitectura de datos
 
-1. **GitHub Actions** (cron `0 22 * * *`, manual o push a `main`) reentrena el modelo de
+1. **GitHub Actions** (cron `0 23 * * *`, manual o push a `main`) reentrena el modelo de
    sentimiento y ejecuta el ETL: descarga OHLCV + noticias con `yfinance`, calcula
    indicadores, pronostica ARIMA 5 días y persiste todo en **Supabase**.
 2. **Vercel** sirve la API (FastAPI) y el dashboard estático. La API lee de Supabase;
@@ -138,7 +138,7 @@ Verifica:
 | GET    | `/api/news?ticker=`           | Noticias clasificadas por el modelo de sentimiento |
 | GET    | `/api/interpret?ticker=&period=` | Interpretación en lenguaje natural                |
 | GET    | `/api/backtest?ticker=`       | Métricas de la simulación histórica + consejo     |
-| GET    | `/api/refresh?tickers=SPY,AAPL,NVDA,MSFT` | Disparo manual del ETL (en local/Vercel) |
+| GET    | `/api/refresh?tickers=NVDA,AAPL,MSFT` | Disparo manual del ETL (en local/Vercel) |
 | GET    | `/api/screener?tickers=&period=` | Empresas del panel con señal BUY/HOLD/SELL        |
 
 > El cron de refresco vino en `vercel.json`; se trasladó a GitHub Actions (job `ingest.yml`)

@@ -1,0 +1,74 @@
+==============================================
+¿CÓMO EJECUTAR? · Swing Trading Consultor IA
+==============================================
+Instrucciones y comandos para correr el proyecto
+en OTRA computadora.
+
+------------------------------------------------
+1) REQUISITOS
+------------------------------------------------
+- Python 3.12+   https://www.python.org/downloads/
+  (marcar "Add python.exe to PATH" al instalar)
+- Internet (instalar dependencias y datos de Yahoo)
+- Credenciales: DATABASE_URL (Supabase) y opcional
+  GEMINI_API_KEY (Google AI Studio)
+
+------------------------------------------------
+2) COPIAR EL PROYECTO
+------------------------------------------------
+Copiar la carpeta a un USB y luego a la otra PC.
+NO copiar:  .venv/, __pycache__/, .git/
+SÍ copiar:  models/  (modelo de sentimiento entrenado)
+
+Opcional, comandos para copiar rápido:
+  robocopy "C:\...\Swing_Trading_consultor_ia"
+           "E:\Swing_Trading_consultor_ia"
+           /E /XD .venv __pycache__ .git
+
+------------------------------------------------
+3) ABRIR TERMINAL EN LA CARPETA DEL PROYECTO
+------------------------------------------------
+  python --version     -> 3.12.x o mayor
+  (si falla, prueba con:  py --version )
+
+------------------------------------------------
+4) CREAR ENTORNO VIRTUAL E INSTALAR
+------------------------------------------------
+  python -m venv .venv
+  .\.venv\Scripts\python -m pip install -e .
+
+------------------------------------------------
+5) CONFIGURAR CREDENCIALES (por cada sesión)
+------------------------------------------------
+PowerShell:
+  $env:DATABASE_URL   = "postgresql://...:6543/postgres"
+  $env:GEMINI_API_KEY = "AIza..."
+CMD:
+  set DATABASE_URL=postgresql://...:6543/postgres
+  set GEMINI_API_KEY=AIza...
+
+(Con los .bat: editas config.bat y run.bat lo carga solo)
+
+------------------------------------------------
+6) LEVANTAR EL SERVIDOR
+------------------------------------------------
+  .\.venv\Scripts\python -m uvicorn main:app --port 8000
+
+------------------------------------------------
+7) VERIFICAR
+------------------------------------------------
+- Dashboard : http://localhost:8000
+- API docs  : http://localhost:8000/docs
+- Estado    : http://localhost:8000/api/health
+              (buscar base_de_datos: true,
+               sentimiento_modelo: true)
+- Smoke test: .\.venv\Scripts\python scripts\smoke.py
+- Opcional  : reentrenar modelo
+              .\.venv\Scripts\python scripts\train_sentiment.py
+
+------------------------------------------------
+8) ATAJOS (.bat incluidos en la carpeta)
+------------------------------------------------
+- setup.bat  : crea .venv + instala dependencias
+- config.bat : pega aquí tus llaves (una sola vez)
+- run.bat    : carga config.bat y levanta uvicorn
