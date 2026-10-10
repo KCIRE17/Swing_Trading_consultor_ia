@@ -18,6 +18,11 @@ dependencies = [
     "google-genai",
     "psycopg[binary]",
     "scikit-learn",
+    # modelo de sentimiento en disco
+    "joblib>=1.4",
+    # carga de .env (main.py) y cliente HTTP de los smoke tests
+    "python-dotenv>=1.0",
+    "httpx>=0.27",
 ]
 
 [tool.setuptools]

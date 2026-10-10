@@ -1,6 +1,7 @@
 import os
 
 import pandas as pd
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
@@ -10,6 +11,12 @@ from app import companies, db, gemini_client, narrator, signal_engine
 from app.cache import DATA_CACHE
 from app.data import fetch_ohlcv, series_payload
 from app.indicators import latest_values
+
+# config.bat / variables del sistema siguen mandando: override=False hace que
+# .env solo rellene lo que aun no esta definido. En Vercel las variables llegan
+# del panel del proyecto, asi que no se busca ningun archivo .env.
+if not os.environ.get("VERCEL"):
+    load_dotenv(override=False)
 
 app = FastAPI(
     title="Swing Trading Consulter IA",
