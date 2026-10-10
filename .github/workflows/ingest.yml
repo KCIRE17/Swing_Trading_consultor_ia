@@ -46,7 +46,7 @@ jobs:
         run: |
           python - <<'PY'
           from app import db
-          for ticker in ["SPY", "AAPL", "NVDA", "MSFT"]:
+          for ticker in ["NVDA", "AAPL", "MSFT"]:
               frame = db.read_ohlcv(ticker, 10)
               news = db.read_news(ticker, 3)
               snap = db.read_latest_forecast(ticker)

@@ -39,12 +39,12 @@ def main():
     ok_all &= check("db: conexion a Supabase", db.connected(), "revisa DATABASE_URL en el job")
 
     for endpoint, extra in [
-        ("/api/indicators?ticker=SPY&period=3mo", "series"),
-        ("/api/forecast?ticker=SPY&period=3mo", "forecast"),
-        ("/api/signal?ticker=SPY&period=3mo", "senal"),
-        ("/api/backtest?ticker=SPY", "backtest"),
-        ("/api/news?ticker=SPY", "noticias"),
-        ("/api/screener?tickers=SPY,AAPL&period=3mo", "companies"),
+        ("/api/indicators?ticker=NVDA&period=3mo", "series"),
+        ("/api/forecast?ticker=NVDA&period=3mo", "forecast"),
+        ("/api/signal?ticker=NVDA&period=3mo", "senal"),
+        ("/api/backtest?ticker=NVDA", "backtest"),
+        ("/api/news?ticker=NVDA", "noticias"),
+        ("/api/screener?tickers=NVDA,AAPL&period=3mo", "companies"),
     ]:
         try:
             status, payload = request(endpoint, timeout=60)

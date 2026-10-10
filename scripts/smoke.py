@@ -7,7 +7,15 @@ from app.data import fetch_ohlcv, series_payload
 from app.indicators import latest_values
 
 
+_FALLOS = 0
+_TOTAL = 0
+
+
 def check(name, ok, detail="", start=None):
+    global _FALLOS, _TOTAL
+    _TOTAL += 1
+    if not ok:
+        _FALLOS += 1
     elapsed = f" ({time.time() - start:.1f}s)" if start else ""
     tag = "PASS" if ok else "FAIL"
     print(f"[{tag}] {name}{elapsed}")
@@ -41,7 +49,7 @@ def run_ticker(ticker, period="6mo"):
 
 def run_no_key_degrade():
     context = {
-        "ticker": "SPY",
+        "ticker": "NVDA",
         "close": 200,
         "sma20": 198,
         "sma50": 195,
@@ -80,7 +88,7 @@ def run_no_key_degrade():
         check("sentimiento: modelo disponible", False, "corre scripts/train_sentiment.py")
 
 
-def run_backtest(ticker="SPY"):
+def run_backtest(ticker="NVDA"):
     start = time.time()
     frame = fetch_ohlcv(ticker, "1y")
     arima = None
@@ -99,8 +107,8 @@ def main():
     start = time.time()
     atxt = advisor.advise_rsi(78)
     check("advisor: RSI sobrecompra -> no invertir", atxt["recomendacion"] == "No invertir", str(atxt), start=start)
-    check("companies: nombres completos (AMZN, TSLA, GOOGL, META)",
-          all(k in companies.COMPANIES for k in ["AMZN", "TSLA", "GOOGL", "META"]))
+    check("companies: nombres completos (NVDA, AAPL, MSFT)",
+          all(k in companies.COMPANIES for k in ["NVDA", "AAPL", "MSFT"]))
 
     if db.available():
         try:
@@ -111,16 +119,16 @@ def main():
     else:
         check("db: DATABASE_URL (Sin base local)", False, "no configurada; el fallback usa yfinance en vivo")
 
-    for ticker in ["SPY", "AAPL", "NVDA"]:
+    for ticker in ["NVDA", "AAPL", "MSFT"]:
         try:
             run_ticker(ticker)
         except Exception as exc:
             check(f"{ticker}: pipeline", False, repr(exc))
     run_no_key_degrade()
     try:
-        run_backtest("SPY")
+        run_backtest("NVDA")
     except Exception as exc:
-        check("backtest SPY", False, repr(exc))
+        check("backtest NVDA", False, repr(exc))
 
     try:
         from fastapi.testclient import TestClient
@@ -132,16 +140,16 @@ def main():
               response.text)
 
         start = time.time()
-        payload = client.get("/api/indicators?ticker=SPY&period=3mo")
+        payload = client.get("/api/indicators?ticker=NVDA&period=3mo")
         ok = payload.status_code == 200 and payload.json().get("series") and len(payload.json()["series"]["dates"]) > 0
         check("http: /api/indicators (serializable sin NaN)", ok, payload.text[:300], start=start)
 
-        resp_forecast = client.get("/api/forecast?ticker=SPY&period=3mo")
+        resp_forecast = client.get("/api/forecast?ticker=NVDA&period=3mo")
         ok_f = (resp_forecast.status_code == 200
                 and resp_forecast.json().get("forecast", {}).get("fuente") in ("supabase", "en_vivo"))
         check("http: /api/forecast", ok_f, resp_forecast.text[:200])
 
-        resp_signal = client.get("/api/signal?ticker=SPY&period=3mo")
+        resp_signal = client.get("/api/signal?ticker=NVDA&period=3mo")
         ok_signal = (
             resp_signal.status_code == 200
             and resp_signal.json().get("senal", {}).get("direccion") in ("BUY", "HOLD", "SELL")
@@ -151,23 +159,23 @@ def main():
         )
         check("http: /api/signal (degradado + narracion + nombre)", ok_signal, resp_signal.text[:200])
 
-        resp_news = client.get("/api/news?ticker=SPY")
+        resp_news = client.get("/api/news?ticker=NVDA")
         check("http: /api/news", resp_news.status_code == 200 and "noticias" in resp_news.json(), resp_news.text[:200])
 
-        resp_bt = client.get("/api/backtest?ticker=SPY")
+        resp_bt = client.get("/api/backtest?ticker=NVDA")
         check("http: /api/backtest", resp_bt.status_code == 200, resp_bt.text[:200])
 
-        resp_sc = client.get("/api/screener?tickers=SPY,AAPL&period=3mo")
+        resp_sc = client.get("/api/screener?tickers=NVDA,AAPL&period=3mo")
         ok_sc = resp_sc.status_code == 200 and len(resp_sc.json().get("companies", [])) == 2 and all(
             c.get("nombre") and c.get("senal") in ("BUY", "HOLD", "SELL") for c in resp_sc.json()["companies"]
         )
         check("http: /api/screener (nombres + senal)", ok_sc, resp_sc.text[:300])
 
-        resp_ind = client.get("/api/indicators?ticker=SPY&period=3mo")
+        resp_ind = client.get("/api/indicators?ticker=NVDA&period=3mo")
         ok_ind = resp_ind.status_code == 200 and set(resp_ind.json().get("asesoria", {})) >= {"precio", "rsi", "macd"}
         check("http: /api/indicators + asesoria", ok_ind, resp_ind.text[:300], start=time.time())
 
-        resp_arima = client.get("/api/forecast?ticker=SPY&period=3mo")
+        resp_arima = client.get("/api/forecast?ticker=NVDA&period=3mo")
         ok_arima = resp_arima.status_code == 200 and resp_arima.json().get("forecast", {}).get("asesoria", {}).get("recomendacion")
         check("http: /api/forecast + asesoria", ok_arima, resp_arima.text[:200])
 
@@ -181,6 +189,9 @@ def main():
         check("http: endpoints", False, repr(exc))
 
     print("== FIN ==")
+    print(f"RESULTADO: {_TOTAL - _FALLOS}/{_TOTAL} pruebas pasaron, {_FALLOS} fallaron.")
+    if _FALLOS:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

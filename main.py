@@ -25,7 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DEFAULT_TICKERS = ["SPY", "AAPL", "NVDA", "MSFT"]
+DEFAULT_TICKERS = ["NVDA", "AAPL", "MSFT"]
 
 
 @app.get("/api/health")
