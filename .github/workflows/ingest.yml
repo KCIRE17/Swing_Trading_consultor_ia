@@ -45,27 +45,41 @@ jobs:
       - name: Verificar datos en Supabase
         run: |
           python - <<'PY'
+          from datetime import date, timedelta
+
           from app import db
 
           errores = []
+          limite = date.today() - timedelta(days=4)
           for ticker in ["NVDA", "AAPL", "MSFT"]:
-              fila = f"{ticker}: velas=0 noticias=0 forecast=none"
+              fila = f"{ticker}: velas=0 noticias=0 forecast=none frescura=?"
               try:
-                  frame = db.read_ohlcv(ticker, 10)
+                  with db.connect() as conn:
+                      max_date = conn.execute(
+                          "SELECT MAX(date) FROM ohlcv WHERE ticker = %s",
+                          (ticker,),
+                      ).fetchone()
+                      velas = conn.execute(
+                          "SELECT COUNT(*) FROM ohlcv WHERE ticker = %s",
+                          (ticker,),
+                      ).fetchone()
                   news = db.read_news(ticker, 3)
                   snap = db.read_latest_forecast(ticker)
-                  fila = (f"{ticker}: velas={len(frame) if frame is not None else 0} "
-                          f"noticias={len(news)} forecast={'ok' if snap else 'none'}")
+                  ultima = str(max_date["max"]) if max_date and max_date["max"] else "sin_data"
+                  fresca = bool(max_date and max_date["max"] and max_date["max"] >= limite)
+                  if not fresca:
+                      errores.append((ticker, f"OHLCV sin actualizar (ultima={ultima})"))
+                  fila = (f"{ticker}: velas={velas['count'] if velas else 0} "
+                          f"noticias={len(news)} forecast={'ok' if snap else 'none'} "
+                          f"ultima={ultima} fresca={'SI' if fresca else 'NO'}")
               except Exception as exc:
                   errores.append((ticker, repr(exc)))
               print(fila)
 
           if errores:
-              for ticker, error in errores:
-                  print(f"WARNING {ticker}: {error}", flush=True)
-
-          if len(errores) == 3:
-              raise SystemExit("ERROR: ningun ticker pudo leerse de Supabase")
+              for ticker, detalle in errores:
+                  print(f"ERROR {ticker}: {detalle}", flush=True)
+              raise SystemExit(f"Verificacion fallida: {len(errores)}/3 tickers sin datos frescos")
           PY
 
   smoke:

@@ -196,6 +196,11 @@ def main():
     log("Resumen:")
     print(json.dumps(summary, ensure_ascii=False, indent=2, default=str))
 
+    if summary["tickers_con_error"] == len(tickers):
+        raise SystemExit("ERROR: ningun ticker pudo ser ingestado (Secret DATABASE_URL o fuente de datos). Abortando.")
+    if summary["tickers_con_error"]:
+        log(f"ADVERTENCIA: {summary['tickers_con_error']}/{len(tickers)} tickers fallaron, revisar el Resumen.")
+
 
 if __name__ == "__main__":
     main()
