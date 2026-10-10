@@ -161,7 +161,11 @@ def _require_url():
 
 @contextmanager
 def connect():
-    conn = psycopg.connect(_require_url(), row_factory=dict_row)
+    conn = psycopg.connect(
+        _require_url(),
+        row_factory=dict_row,
+        prepare_threshold=None,
+    )
     try:
         yield conn
         conn.commit()
@@ -189,9 +193,10 @@ def init_schema():
 def upsert_ohlcv(ticker, rows):
     if not rows:
         return 0
-    records = [(_row(1, ticker, r)) for r in rows]
+    records = [_row(ticker, r) for r in rows]
     with connect() as conn:
-        conn.executemany(_UPSERT_OHLCV, records)
+        with conn.cursor() as cur:
+            cur.executemany(_UPSERT_OHLCV, records)
     return len(records)
 
 
@@ -226,7 +231,8 @@ def upsert_news(ticker, rows):
         for r in rows
     ]
     with connect() as conn:
-        conn.executemany(_UPSERT_NEWS, records)
+        with conn.cursor() as cur:
+            cur.executemany(_UPSERT_NEWS, records)
     return len(records)
 
 
