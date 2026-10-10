@@ -1,0 +1,45 @@
+# Contexto de build: fuera todo lo que no se necesita en la imagen final.
+.git
+.gitignore
+.github
+
+# Secretos: la imagen se construye desde el codigo, nunca desde credenciales.
+.env
+config.bat
+.env.*
+!.env.example
+
+# Entornos locales
+.venv
+venv
+env
+__pycache__
+*.py[cod]
+*.egg-info
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Builds
+build
+dist
+wheels
+*.spec
+
+# Referencias de diseno: solo se usaron para construir la UI, ya esta integrada.
+swing_trading_views
+
+# Herramientas locales de desarrollo
+tools
+test.bat
+run.bat
+setup.bat
+
+# Artefactos de compilacion y del editor
+*.log
+log.json
+*-log-export-*.json
+.vscode
+.idea
+.DS_Store
+Thumbs.db
