@@ -331,6 +331,8 @@ function sentimientoLabel(code) {
 
 const DEFAULT_TICKER = "NVDA";
 
+let running = false;
+
 const COMPANIES = [
   { t: "NVDA", n: "NVIDIA Corp." },
   { t: "AAPL", n: "Apple Inc." },
@@ -1006,6 +1008,9 @@ function renderBacktest(bt) {
 /* ---------------- Análisis principal ---------------- */
 
 async function run() {
+  if (running) return;
+  running = true;
+
   const ticker = byId("ticker")?.value.trim().toUpperCase() || DEFAULT_TICKER;
   const period = byId("period")?.value || "6mo";
   const btn = byId("runBtn");
@@ -1014,6 +1019,7 @@ async function run() {
 
   if (btn) btn.disabled = true;
   setStatus("Recopilando datos y calculando señales...");
+  _setLoading(true, ticker);
   hideError();
 
   try {
@@ -1050,11 +1056,35 @@ async function run() {
     showError(err.message);
     setStatus("Error");
   } finally {
+    running = false;
+    _setLoading(false);
     if (btn) btn.disabled = false;
   }
 }
 
 /* ---------------- Estado / errores ---------------- */
+
+let loadTimer = null;
+
+function _setLoading(on, ticker) {
+  const overlay = byId("loadOverlay");
+  const text = byId("loadText");
+  const btn = byId("runBtn");
+  const spinner = byId("runSpinner");
+  const main = document.querySelector(".ka-main");
+
+  if (btn) btn.classList.toggle("is-loading", on);
+  if (spinner) spinner.classList.toggle("hidden", !on);
+  if (main) main.setAttribute("aria-busy", String(on));
+
+  if (on) {
+    if (text && ticker) text.textContent = `Analizando ${ticker}…`;
+    loadTimer = setTimeout(() => overlay?.classList.remove("hidden"), 250);
+  } else {
+    clearTimeout(loadTimer);
+    overlay?.classList.add("hidden");
+  }
+}
 
 function setStatus(text) {
   const el = byId("status");
@@ -1105,7 +1135,7 @@ const TDSP_PHASES = [
 ];
 
 const PIPELINE_STEPS = [
-  { paso: "1", titulo: "Disparo", texto: "GitHub Actions: cron 22:00 UTC, manual o push a main." },
+  { paso: "1", titulo: "Disparo", texto: "GitHub Actions: cron 18:00 h Perú (23:00 UTC), manual o push a main." },
   { paso: "2", titulo: "Entrenamiento ML", texto: "TF-IDF + Regresión Logística sobre 12 mil+ titulares financieros (sentimiento)." },
   { paso: "3", titulo: "ETL", texto: "OHLCV + indicadores, ARIMA 5 días y noticias clasificadas → Supabase." },
   { paso: "4", titulo: "API y decisión", texto: "Vercel lee Supabase; Gemini aporta lectura cualitativa; reglas emiten señal." },
@@ -1274,6 +1304,8 @@ function renderGlossary() {
 document.addEventListener("DOMContentLoaded", () => {
   bindTabs();
   fillCompanySelects();
+  byId("runBtn")?.addEventListener("click", run);
+  byId("ticker")?.addEventListener("change", run);
   initCharts();
   renderMetodologia();
   renderGlossary();

@@ -90,9 +90,15 @@
   </header>
 
   <main class="ka-main">
+    <div id="loadOverlay" class="ka-load-overlay hidden" role="status" aria-live="polite">
+      <span class="ka-spinner" aria-hidden="true"></span>
+      <span id="loadText">Analizando…</span>
+    </div>
+
     <div class="ka-bar ka-gap-md" style="margin-bottom: var(--ka-space-md);">
       <button class="ka-btn ka-btn-primary" id="runBtn">
         <svg class="ka-i" aria-hidden="true"><use href="/icons/sprite.svg#i-play_circle"></use></svg>
+        <span class="ka-spinner ka-spinner-xs hidden" id="runSpinner" aria-hidden="true"></span>
         Analizar
       </button>
       <span class="ka-label-sm ka-muted" id="status" aria-live="polite">Listo</span>
@@ -112,7 +118,7 @@
 
       <div class="card">
         <h2>Tablero de mercado</h2>
-        <p class="chart-hint">Radiografía de los 8 activos: color de la celda según la dirección del día; el borde indica la señal del screener (verde = Compra, amarillo = Mantener, rojo = Venta).</p>
+        <p class="chart-hint">Radiografía de los 3 activos: color de la celda según la dirección del día; el borde indica la señal del screener (verde = Compra, amarillo = Mantener, rojo = Venta).</p>
         <div id="marketBoard" class="market-board"></div>
       </div>
 
