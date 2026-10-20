@@ -32,6 +32,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def _no_cache_estaticos(request, call_next):
+    response = await call_next(request)
+    if not request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
 DEFAULT_TICKERS = ["NVDA", "AAPL", "MSFT"]
 
 

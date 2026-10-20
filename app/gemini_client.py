@@ -2,7 +2,10 @@ import json
 import os
 
 MODEL_DEFAULT = "gemini-2.5-flash"
-TIMEOUT_SECONDS = 20
+# El dashboard llama a /api/signal en paralelo con el resto; un timeout largo
+# aqui deja la vista completa en "Cargando". Con 8 s Gemini casi siempre
+# responde; si no, analyze() degrada a reglas cuantitativas.
+TIMEOUT_SECONDS = int(os.environ.get("GEMINI_TIMEOUT_SECONDS", "8"))
 
 SYSTEM_PROMPT = (
     "Eres un analista senior de inversiones especializado en Swing Trading "
@@ -52,7 +55,10 @@ def enrich_narrative(paragraph_reglas, context=None):
 
         model = os.environ.get("GEMINI_NARRATIVE_MODEL", NARRATIVE_MODEL_DEFAULT)
         api_key = os.environ["GEMINI_API_KEY"]
-        client = genai.Client(api_key=api_key)
+        client = genai.Client(
+            api_key=api_key,
+            http_options={"timeout": TIMEOUT_SECONDS * 1000},
+        )
         content = (
             "Contexto numerico del activo: "
             f"{_build_text_part(context) if context else ''} \n\n"
@@ -93,7 +99,10 @@ def _gemini_text(text_part):
 
     model = os.environ.get("GEMINI_MODEL", MODEL_DEFAULT)
     api_key = os.environ["GEMINI_API_KEY"]
-    client = genai.Client(api_key=api_key)
+    client = genai.Client(
+        api_key=api_key,
+        http_options={"timeout": TIMEOUT_SECONDS * 1000},
+    )
     response = client.models.generate_content(
         model=model,
         contents=text_part,
