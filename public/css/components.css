@@ -806,6 +806,12 @@ select option {
   text-transform: uppercase;
   letter-spacing: var(--ka-text-label-md-ls);
 }
+/* style.css define .hidden (display:none) ANTES que este archivo; sin esta
+   regla mas especifica, .ka-load-overlay{display:flex} ganaba la cascada y el
+   overlay "Analizando..." nunca desaparecia (velo difuminando el dashboard). */
+.ka-load-overlay.hidden {
+  display: none;
+}
 .ka-spinner {
   width: 34px;
   height: 34px;

@@ -85,7 +85,7 @@ def _download_with_retry(ticker, period, attempts=2):
     last_error = None
     for _ in range(attempts):
         try:
-            hist = yf.Ticker(ticker).history(period=period, auto_adjust=True)
+            hist = yf.Ticker(ticker).history(period=period, auto_adjust=True, timeout=15)
             if hist is None or hist.empty:
                 raise ValueError("Sin datos devueltos por yfinance")
             frame = hist.dropna(subset=["Close"]).copy()

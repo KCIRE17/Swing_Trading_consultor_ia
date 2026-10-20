@@ -1,7 +1,12 @@
 "use strict";
 
-Chart.defaults.color = "#8b949e";
-Chart.defaults.borderColor = "rgba(48,54,61,1)";
+// Si Chart.js no carga (bloqueador, red, cache), NO lanzar: la app sigue
+// funcionando con las velas y las tablas, y se avisa en #errorBox.
+const CHARTS_OK = typeof Chart !== "undefined";
+if (CHARTS_OK) {
+  Chart.defaults.color = "#8b949e";
+  Chart.defaults.borderColor = "rgba(48,54,61,1)";
+}
 
 const up = "#26a269";
 const down = "#f14c4c";
@@ -96,6 +101,7 @@ const chartDefs = {
 };
 
 function initCharts() {
+  if (!CHARTS_OK) return;
   Object.values(chartDefs).filter(Boolean).forEach((def) => {
     const canvas = byId(def.canvas);
     if (!canvas) return;
@@ -156,9 +162,25 @@ function updateChart(key, labels, datasetsData) {
   chart.update();
 }
 
-async function apiGet(path) {
-  const response = await fetch(path, { headers: { Accept: "application/json" } });
-  return _parse(response);
+async function apiGet(path, timeoutMs = 60000) {
+  // Sin timeout, una request colgada dejaria el overlay "Analizando..." para
+  // siempre (AbortController -> allSettled -> render parcial + aviso).
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const response = await fetch(path, {
+      headers: { Accept: "application/json" },
+      signal: ctrl.signal,
+    });
+    return await _parse(response);
+  } catch (err) {
+    if (err && err.name === "AbortError") {
+      throw new Error(`Sin respuesta de ${path} tras ${Math.round(timeoutMs / 1000)} s`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function _parse(response) {
@@ -236,7 +258,7 @@ const rsiBandsPlugin = {
     ctx.restore();
   },
 };
-Chart.register(rsiBandsPlugin);
+if (CHARTS_OK) Chart.register(rsiBandsPlugin);
 
 /* ---------------- Pestañas ---------------- */
 
@@ -764,8 +786,9 @@ function renderCompare(forecasts, currentTicker) {
 function renderPrescriptiva(sig, bt, ind, fore) {
   const senal = sig?.senal || {};
   const ia = sig?.analisis_ia || {};
-  const ctx = sig?.contexto_tecnico || {};
-  const dirCls = `sig-${senal.direccion?.toLowerCase()}`;
+  // si /api/signal falló, se usa el contexto del indicador como respaldo
+  const ctx = sig?.contexto_tecnico || ind?.ultimo || {};
+  const dirCls = `sig-${senal.direccion?.toLowerCase() || "hold"}`;
 
   const kpi = byId("kpisPres");
   const wr = bt?.backtest?.win_rate;
@@ -777,10 +800,12 @@ function renderPrescriptiva(sig, bt, ind, fore) {
     (wr != null ? kpiCard("Acierto histórico", fmt(wr * 100, 0) + " %", "win rate backtest") : "");
 
   const hero = byId("signalHero");
+  const nombreActivo = sig?.nombre || sig?.ticker || ind?.ticker || "";
+  const direccion = senal.direccion || "SIN SEÑAL";
   hero.innerHTML = `
     <div class="hero-left">
       <div class="hero-signal ${dirCls}">${sigLabel(senal.direccion)}</div>
-      <div class="hero-sub">${esc(sig.nombre || sig.ticker)} · ${esc(senal.direccion)}</div>
+      <div class="hero-sub">${esc(nombreActivo)} · ${esc(direccion)}</div>
     </div>
     <div class="hero-levels">
       <div class="kpi"><div class="label">Stop Loss</div><div class="value down">${fmt(senal.stop_loss)}</div></div>
@@ -1023,35 +1048,68 @@ async function run() {
   hideError();
 
   try {
-    const [ind, screenerData, sig, fore, newsData, bt] = await Promise.all([
-      apiGet(`/api/indicators?ticker=${t}&period=${p}`),
-      apiGet(`/api/screener?tickers=${SCREENER.map((c) => c.t).join(",")}&period=${p}`),
-      apiGet(`/api/signal?ticker=${t}&period=${p}`),
-      apiGet(`/api/forecast?ticker=${t}&period=${p}`),
-      apiGet(`/api/news?ticker=${t}`),
-      apiGet(`/api/backtest?ticker=${t}`),
-    ]);
+    const ENDPOINTS = [
+      ["ind", `/api/indicators?ticker=${t}&period=${p}`],
+      ["screener", `/api/screener?tickers=${SCREENER.map((c) => c.t).join(",")}&period=${p}`],
+      ["sig", `/api/signal?ticker=${t}&period=${p}`],
+      ["fore", `/api/forecast?ticker=${t}&period=${p}`],
+      ["news", `/api/news?ticker=${t}`],
+      ["bt", `/api/backtest?ticker=${t}`],
+    ];
 
-    const compares = await Promise.all(
+    // allSettled en vez de all: un endpoint caido (Gemini lento, news, etc.)
+    // no debe dejar la pantalla en blanco; se renderiza lo disponible.
+    const settled = await Promise.allSettled(ENDPOINTS.map(([, url]) => apiGet(url)));
+    const data = {};
+    const failed = [];
+    settled.forEach((res, i) => {
+      const key = ENDPOINTS[i][0];
+      if (res.status === "fulfilled") data[key] = res.value;
+      else failed.push(key);
+    });
+
+    if (!data.ind) {
+      const detail = settled[0] && settled[0].reason ? settled[0].reason.message : "error desconocido";
+      throw new Error(`No se pudo cargar el activo ${ticker}. ${detail}`);
+    }
+
+    const comparesSettled = await Promise.allSettled(
       SCREENER.map((c) =>
-        c.t === ticker ? Promise.resolve(fore) : apiGet(`/api/forecast?ticker=${c.t}&period=6mo`)
+        c.t === ticker ? Promise.resolve(data.fore) : apiGet(`/api/forecast?ticker=${c.t}&period=6mo`)
       )
     );
+    const compares = comparesSettled
+      .filter((r) => r.status === "fulfilled")
+      .map((r) => r.value)
+      .filter(Boolean);
 
-    state.lastSeries = ind.series;
-    state.lastAtr = ind.ultimo?.atr14;
+    state.lastSeries = data.ind.series;
+    state.lastAtr = data.ind.ultimo?.atr14;
 
-    renderDescriptiva(ind, screenerData);
-    renderPredictiva(fore, sig, newsData);
-    renderPrescriptiva(sig, bt, ind, fore);
+    renderDescriptiva(data.ind, data.screener);
+    renderPredictiva(data.fore, data.sig, data.news);
+    renderPrescriptiva(data.sig, data.bt, data.ind, data.fore);
     renderCompare(compares, ticker);
 
     // El shell nuevo no tiene header h1; las rutas 4 y 5 (router.js) se
     // alimentan de este payload en vez de volver a pedir la API.
-    window.__kaData = { ticker, period, ind, screener: screenerData, sig, fore, news: newsData, bt, compares };
+    window.__kaData = {
+      ticker, period,
+      ind: data.ind, screener: data.screener, sig: data.sig,
+      fore: data.fore, news: data.news, bt: data.bt, compares,
+    };
     window.dispatchEvent(new CustomEvent("ka:data", { detail: window.__kaData }));
 
-    setStatus(`Listo · ${ticker} · ${new Date().toLocaleTimeString()}`);
+    if (failed.length) {
+      showError(
+        `Parcial: sin respuesta de ${failed.join(", ")}. ` +
+          "El resto del dashboard se muestra con los datos disponibles."
+      );
+      setStatus(`Parcial · ${ticker} · ${new Date().toLocaleTimeString()}`);
+    } else {
+      setStatus(`Listo · ${ticker} · ${new Date().toLocaleTimeString()}`);
+    }
+    _avisarSinChartJs();
   } catch (err) {
     showError(err.message);
     setStatus("Error");
@@ -1060,6 +1118,20 @@ async function run() {
     _setLoading(false);
     if (btn) btn.disabled = false;
   }
+}
+
+function _avisarSinChartJs() {
+  if (CHARTS_OK) return;
+  // run() oculta #errorBox al empezar; este aviso se emite al terminar.
+  const aviso =
+    "No se pudo cargar la librería de gráficos (Chart.js). " +
+    "Los números, tablas y velas sí se muestran; deshabilitá el bloqueador de anuncios para ver los gráficos de líneas.";
+  const box = byId("errorBox");
+  if (box && !box.classList.contains("hidden")) {
+    box.textContent = `${box.textContent} · ${aviso}`;
+    return;
+  }
+  showError(aviso);
 }
 
 /* ---------------- Estado / errores ---------------- */
