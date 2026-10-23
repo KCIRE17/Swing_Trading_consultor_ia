@@ -1020,7 +1020,6 @@ async function run() {
 
   if (btn) btn.disabled = true;
   setStatus("Recopilando datos y calculando señales...");
-  _setLoading(true, ticker);
   hideError();
 
   if (isFirst) {
@@ -1040,9 +1039,6 @@ async function run() {
     firstLoadTimeoutId = setTimeout(() => {
       if (!firstLoadHidden) {
         firstLoadHidden = true;
-        const overlay = byId("loadOverlay");
-        overlay?.classList.add("hidden");
-        _renderFirstLoadPartial(ticker, period);
         isFirstLoad = false;
       }
     }, 7000);
@@ -1192,22 +1188,6 @@ async function run() {
     setStatus("Error");
   } finally {
     running = false;
-    if (isFirst) {
-      if (!firstLoadHidden) {
-        firstLoadHidden = true;
-        if (firstLoadTimeoutId) {
-          clearTimeout(firstLoadTimeoutId);
-          firstLoadTimeoutId = null;
-        }
-        const overlay = byId("loadOverlay");
-        overlay?.classList.add("hidden");
-        _renderFirstLoadPartial(ticker, period);
-        isFirstLoad = false;
-      }
-      if (btn) btn.disabled = false;
-      return;
-    }
-    _setLoading(false);
     if (btn) btn.disabled = false;
   }
 }
@@ -1258,35 +1238,6 @@ function _renderFirstLoadPartial(ticker, period) {
     }
   } catch (_) {
     /* no romper UI en corte a 7s */
-  }
-}
-
-function _setLoading(on, ticker) {
-  const overlay = byId("loadOverlay");
-  const text = byId("loadText");
-  const btn = byId("runBtn");
-  const spinner = byId("runSpinner");
-  const main = document.querySelector(".ka-main");
-
-  if (btn) btn.classList.toggle("is-loading", on);
-  if (spinner) spinner.classList.toggle("hidden", !on);
-  if (main) main.setAttribute("aria-busy", String(on));
-
-  if (on) {
-    if (text && ticker) text.textContent = `Analizando ${ticker}…`;
-    if (isFirstLoad) {
-      clearTimeout(loadTimer);
-      overlay?.classList.remove("hidden");
-    } else {
-      loadTimer = setTimeout(() => overlay?.classList.remove("hidden"), 250);
-    }
-  } else {
-    if (isFirstLoad) {
-      clearTimeout(loadTimer);
-      return;
-    }
-    clearTimeout(loadTimer);
-    overlay?.classList.add("hidden");
   }
 }
 
