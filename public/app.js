@@ -567,7 +567,6 @@ function renderDescriptiva(ind, screenerData) {
   renderAdvice("advicePrecio", ind.asesoria?.precio);
   renderAdvice("adviceRsi", ind.asesoria?.rsi);
   renderAdvice("adviceMacd", ind.asesoria?.macd);
-  renderDecision("decisionDescr", ind.asesoria?.decision);
 }
 
 function renderMarketBoard(screenerData) {

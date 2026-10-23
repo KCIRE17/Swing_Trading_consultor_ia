@@ -72,17 +72,7 @@ def indicators(ticker: str = Query(..., min_length=1), period: str = "6mo"):
                 "macd": advisor.describe_macd(
                     ultimo.get("macd"), ultimo.get("macd_signal"), ultimo.get("macd_hist")
                 ),
-                "decision": advisor.resumen_descriptiva(
-                    ultimo.get("close"),
-                    ultimo.get("sma20"),
-                    ultimo.get("sma50"),
-                    ultimo.get("rsi14"),
-                    ultimo.get("macd"),
-                    ultimo.get("macd_signal"),
-                    ultimo.get("macd_hist"),
-                    ultimo.get("atr14"),
-                    ultimo.get("change_pct"),
-                ),
+
             },
         }
     except Exception as exc:
