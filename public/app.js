@@ -1016,20 +1016,142 @@ async function run() {
   const btn = byId("runBtn");
   const t = encodeURIComponent(ticker);
   const p = encodeURIComponent(period);
+  const isFirst = isFirstLoad;
 
   if (btn) btn.disabled = true;
   setStatus("Recopilando datos y calculando señales...");
   _setLoading(true, ticker);
   hideError();
 
+  if (isFirst) {
+    firstLoadResults = {
+      ind: null,
+      screenerData: null,
+      sig: null,
+      fore: null,
+      newsData: null,
+      bt: null,
+      compares: [],
+    };
+    firstLoadHidden = false;
+    if (firstLoadTimeoutId) {
+      clearTimeout(firstLoadTimeoutId);
+    }
+    firstLoadTimeoutId = setTimeout(() => {
+      if (!firstLoadHidden) {
+        firstLoadHidden = true;
+        const overlay = byId("loadOverlay");
+        overlay?.classList.add("hidden");
+        _renderFirstLoadPartial(ticker, period);
+        isFirstLoad = false;
+      }
+    }, 7000);
+  }
+
   try {
+    const indP = apiGet(`/api/indicators?ticker=${t}&period=${p}`)
+      .then((v) => {
+        firstLoadResults.ind = v;
+        state.lastSeries = v?.series;
+        state.lastAtr = v?.ultimo?.atr14;
+        if (isFirst && !firstLoadHidden && firstLoadResults.ind && firstLoadResults.screenerData) {
+          try {
+            renderDescriptiva(firstLoadResults.ind, firstLoadResults.screenerData);
+          } catch (_) {}
+        }
+        return v;
+      })
+      .catch((e) => {
+        throw e;
+      });
+
+    const screenerP = apiGet(`/api/screener?tickers=${SCREENER.map((c) => c.t).join(",")}&period=${p}`)
+      .then((v) => {
+        firstLoadResults.screenerData = v;
+        if (isFirst && !firstLoadHidden && firstLoadResults.ind && firstLoadResults.screenerData) {
+          try {
+            renderDescriptiva(firstLoadResults.ind, firstLoadResults.screenerData);
+          } catch (_) {}
+        }
+        return v;
+      })
+      .catch((e) => {
+        throw e;
+      });
+
+    const sigP = apiGet(`/api/signal?ticker=${t}&period=${p}`)
+      .then((v) => {
+        firstLoadResults.sig = v;
+        if (isFirst && !firstLoadHidden && firstLoadResults.fore && firstLoadResults.sig && firstLoadResults.newsData) {
+          try {
+            renderPredictiva(firstLoadResults.fore, firstLoadResults.sig, firstLoadResults.newsData);
+          } catch (_) {}
+        }
+        if (isFirst && !firstLoadHidden && firstLoadResults.sig && firstLoadResults.bt && firstLoadResults.ind && firstLoadResults.fore) {
+          try {
+            renderPrescriptiva(firstLoadResults.sig, firstLoadResults.bt, firstLoadResults.ind, firstLoadResults.fore);
+          } catch (_) {}
+        }
+        return v;
+      })
+      .catch((e) => {
+        throw e;
+      });
+
+    const foreP = apiGet(`/api/forecast?ticker=${t}&period=${p}`)
+      .then((v) => {
+        firstLoadResults.fore = v;
+        if (isFirst && !firstLoadHidden && firstLoadResults.fore && firstLoadResults.sig && firstLoadResults.newsData) {
+          try {
+            renderPredictiva(firstLoadResults.fore, firstLoadResults.sig, firstLoadResults.newsData);
+          } catch (_) {}
+        }
+        if (isFirst && !firstLoadHidden && firstLoadResults.sig && firstLoadResults.bt && firstLoadResults.ind && firstLoadResults.fore) {
+          try {
+            renderPrescriptiva(firstLoadResults.sig, firstLoadResults.bt, firstLoadResults.ind, firstLoadResults.fore);
+          } catch (_) {}
+        }
+        return v;
+      })
+      .catch((e) => {
+        throw e;
+      });
+
+    const newsP = apiGet(`/api/news?ticker=${t}`)
+      .then((v) => {
+        firstLoadResults.newsData = v;
+        if (isFirst && !firstLoadHidden && firstLoadResults.fore && firstLoadResults.sig && firstLoadResults.newsData) {
+          try {
+            renderPredictiva(firstLoadResults.fore, firstLoadResults.sig, firstLoadResults.newsData);
+          } catch (_) {}
+        }
+        return v;
+      })
+      .catch((e) => {
+        throw e;
+      });
+
+    const btP = apiGet(`/api/backtest?ticker=${t}`)
+      .then((v) => {
+        firstLoadResults.bt = v;
+        if (isFirst && !firstLoadHidden && firstLoadResults.sig && firstLoadResults.bt && firstLoadResults.ind && firstLoadResults.fore) {
+          try {
+            renderPrescriptiva(firstLoadResults.sig, firstLoadResults.bt, firstLoadResults.ind, firstLoadResults.fore);
+          } catch (_) {}
+        }
+        return v;
+      })
+      .catch((e) => {
+        throw e;
+      });
+
     const [ind, screenerData, sig, fore, newsData, bt] = await Promise.all([
-      apiGet(`/api/indicators?ticker=${t}&period=${p}`),
-      apiGet(`/api/screener?tickers=${SCREENER.map((c) => c.t).join(",")}&period=${p}`),
-      apiGet(`/api/signal?ticker=${t}&period=${p}`),
-      apiGet(`/api/forecast?ticker=${t}&period=${p}`),
-      apiGet(`/api/news?ticker=${t}`),
-      apiGet(`/api/backtest?ticker=${t}`),
+      indP,
+      screenerP,
+      sigP,
+      foreP,
+      newsP,
+      btP,
     ]);
 
     const compares = await Promise.all(
@@ -1037,17 +1159,30 @@ async function run() {
         c.t === ticker ? Promise.resolve(fore) : apiGet(`/api/forecast?ticker=${c.t}&period=6mo`)
       )
     );
+    firstLoadResults.compares = compares;
+    if (isFirst && !firstLoadHidden) {
+      try {
+        renderCompare(compares, ticker);
+      } catch (_) {}
+    }
 
     state.lastSeries = ind.series;
     state.lastAtr = ind.ultimo?.atr14;
 
-    renderDescriptiva(ind, screenerData);
-    renderPredictiva(fore, sig, newsData);
-    renderPrescriptiva(sig, bt, ind, fore);
-    renderCompare(compares, ticker);
+    if (isFirst && !firstLoadHidden) {
+      try {
+        renderDescriptiva(ind, screenerData);
+        renderPredictiva(fore, sig, newsData);
+        renderPrescriptiva(sig, bt, ind, fore);
+        renderCompare(compares, ticker);
+      } catch (_) {}
+    } else if (!isFirst) {
+      renderDescriptiva(ind, screenerData);
+      renderPredictiva(fore, sig, newsData);
+      renderPrescriptiva(sig, bt, ind, fore);
+      renderCompare(compares, ticker);
+    }
 
-    // El shell nuevo no tiene header h1; las rutas 4 y 5 (router.js) se
-    // alimentan de este payload en vez de volver a pedir la API.
     window.__kaData = { ticker, period, ind, screener: screenerData, sig, fore, news: newsData, bt, compares };
     window.dispatchEvent(new CustomEvent("ka:data", { detail: window.__kaData }));
 
@@ -1057,6 +1192,21 @@ async function run() {
     setStatus("Error");
   } finally {
     running = false;
+    if (isFirst) {
+      if (!firstLoadHidden) {
+        firstLoadHidden = true;
+        if (firstLoadTimeoutId) {
+          clearTimeout(firstLoadTimeoutId);
+          firstLoadTimeoutId = null;
+        }
+        const overlay = byId("loadOverlay");
+        overlay?.classList.add("hidden");
+        _renderFirstLoadPartial(ticker, period);
+        isFirstLoad = false;
+      }
+      if (btn) btn.disabled = false;
+      return;
+    }
     _setLoading(false);
     if (btn) btn.disabled = false;
   }
@@ -1065,6 +1215,51 @@ async function run() {
 /* ---------------- Estado / errores ---------------- */
 
 let loadTimer = null;
+let isFirstLoad = true;
+let firstLoadHidden = false;
+let firstLoadTimeoutId = null;
+let firstLoadResults = {
+  ind: null,
+  screenerData: null,
+  sig: null,
+  fore: null,
+  newsData: null,
+  bt: null,
+  compares: [],
+};
+
+function _renderFirstLoadPartial(ticker, period) {
+  try {
+    if (firstLoadResults.ind && firstLoadResults.screenerData) {
+      renderDescriptiva(firstLoadResults.ind, firstLoadResults.screenerData);
+    }
+    if (firstLoadResults.fore && firstLoadResults.sig && firstLoadResults.newsData) {
+      renderPredictiva(firstLoadResults.fore, firstLoadResults.sig, firstLoadResults.newsData);
+    }
+    if (firstLoadResults.sig && firstLoadResults.bt && firstLoadResults.ind && firstLoadResults.fore) {
+      renderPrescriptiva(firstLoadResults.sig, firstLoadResults.bt, firstLoadResults.ind, firstLoadResults.fore);
+    }
+    if (firstLoadResults.compares && firstLoadResults.compares.length) {
+      renderCompare(firstLoadResults.compares, ticker);
+    }
+    if (window.__kaData || firstLoadResults.ind) {
+      window.__kaData = {
+        ticker,
+        period,
+        ind: firstLoadResults.ind,
+        screener: firstLoadResults.screenerData,
+        sig: firstLoadResults.sig,
+        fore: firstLoadResults.fore,
+        news: firstLoadResults.newsData,
+        bt: firstLoadResults.bt,
+        compares: firstLoadResults.compares,
+      };
+      window.dispatchEvent(new CustomEvent("ka:data", { detail: window.__kaData }));
+    }
+  } catch (_) {
+    /* no romper UI en corte a 7s */
+  }
+}
 
 function _setLoading(on, ticker) {
   const overlay = byId("loadOverlay");
@@ -1079,8 +1274,17 @@ function _setLoading(on, ticker) {
 
   if (on) {
     if (text && ticker) text.textContent = `Analizando ${ticker}…`;
-    loadTimer = setTimeout(() => overlay?.classList.remove("hidden"), 250);
+    if (isFirstLoad) {
+      clearTimeout(loadTimer);
+      overlay?.classList.remove("hidden");
+    } else {
+      loadTimer = setTimeout(() => overlay?.classList.remove("hidden"), 250);
+    }
   } else {
+    if (isFirstLoad) {
+      clearTimeout(loadTimer);
+      return;
+    }
     clearTimeout(loadTimer);
     overlay?.classList.add("hidden");
   }
